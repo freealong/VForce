@@ -15,9 +15,10 @@ FRCNNDetector::FRCNNDetector(const string &cfg_file) {
   if (!fs.isOpened()) {
     LOG(ERROR) << "Open config file failed: " << cfg_file;
   }
-  string script_path, script_name;
+  string script_path, script_name, model;
   fs["script_path"] >> script_path;
   fs["script_name"] >> script_name;
+  fs["model"] >> model;
   Py_Initialize();
   // add script_path to python path
   if (!script_path.empty()) {
@@ -29,6 +30,11 @@ FRCNNDetector::FRCNNDetector(const string &cfg_file) {
   PyObject *pName;
   pName = PyUnicode_FromString(script_name.c_str());
   pModule_ = PyImport_Import(pName);
+  // load model
+  auto fun = PyObject_GetAttrString(pModule_, "load_model");
+  PyObject *pArgs = PyTuple_New(1);
+  PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(model.c_str()));
+  PyObject_CallObject(fun, pArgs);
   // load function detect
   pfun_ = PyObject_GetAttrString(pModule_, "detect");
 }
@@ -39,7 +45,7 @@ bool FRCNNDetector::Detect(const cv::Mat &img, DetectorResults &reslults) {
   PyObject *pArgs = PyTuple_New(1);
   PyTuple_SetItem(pArgs, 0, img_ndarray);
   PyObject *pRes = PyObject_CallObject(pfun_, pArgs);
-  int size = PyList_Size(pRes);
+  int size = static_cast<int>(PyList_Size(pRes));
   Py_DecRef(img_ndarray);
   if (size == 0) {
     return false;
@@ -51,10 +57,10 @@ bool FRCNNDetector::Detect(const cv::Mat &img, DetectorResults &reslults) {
       auto &rect = object.rect_;
       int xmin, ymin, xmax, ymax;
       PyObject *box = PyList_GetItem(pRes, i);
-      xmin = PyLong_AsLong(PyList_GetItem(box, 0));
-      ymin = PyLong_AsLong(PyList_GetItem(box, 1));
-      xmax = PyLong_AsLong(PyList_GetItem(box, 2));
-      ymax = PyLong_AsLong(PyList_GetItem(box, 3));
+      xmin = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 0)));
+      ymin = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 1)));
+      xmax = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 2)));
+      ymax = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 3)));
       // make index start with 0
       rect.x = xmin - 1;
       rect.y = ymin - 1;

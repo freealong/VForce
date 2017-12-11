@@ -36,6 +36,7 @@ DEFINE_bool(gui, true, "pointcloud visualization");
 DEFINE_bool(tcp, false, "run tcp server");
 DEFINE_bool(virtual_camera, false, "read data from file system instead of a really RGB-D camera");
 DEFINE_string(virtual_camera_path, "test_data", "data path which virtual camera will read from");
+DEFINE_string(config_root, "../apps/pick_pad/config", "program will read configs under this path");
 
 // global mutex and condition_variable
 mutex mu;
@@ -161,8 +162,8 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
   camera->Start();
   cv::Mat color, depth;
 
-  Vision vision(vision_cfg);
-  Robot robot(robot_cfg);
+  Vision vision(FLAGS_config_root, vision_cfg);
+  Robot robot(FLAGS_config_root + "/" + robot_cfg);
 
   while (true) {
     if (g_close)
@@ -208,7 +209,7 @@ int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // read conifg
-  cv::FileStorage fs("../config/vision_3d.yml", cv::FileStorage::READ);
+  cv::FileStorage fs(FLAGS_config_root + "/main.yml", cv::FileStorage::READ);
   int width, height;
   fs["gui"]["width"] >> width;
   fs["gui"]["height"] >> height;

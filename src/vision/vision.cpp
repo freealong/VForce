@@ -14,32 +14,28 @@ using namespace std;
 
 namespace VForce {
 
-Vision::Vision(std::string cfg_file) : transformed_model_(new pcl::PointCloud<pcl::PointXYZ>) {
-  cv::FileStorage fs(cfg_file, cv::FileStorage::READ);
+Vision::Vision(std::string cfg_root, std::string cfg_file) : transformed_model_(new pcl::PointCloud<pcl::PointXYZ>) {
+  cv::FileStorage fs(cfg_root + "/" + cfg_file, cv::FileStorage::READ);
   // load detector
-  auto detector_node = fs["detector"];
-  string detector_name, detector_config;
-  detector_node["name"] >> detector_name;
-  detector_node["config"] >> detector_config;
-  if (detector_name == "FRCNN") {
-    detector_ = std::shared_ptr<Detector>(new FRCNNDetector(detector_config));
+  string detector_name;
+  fs["detector_name"] >> detector_name;
+  if (detector_name == "frcnndetector") {
+    detector_ = std::shared_ptr<Detector>(new FRCNNDetector(cfg_root + "/frcnndetector.yml"));
   }
-  else if (detector_name == "MRCNN") {
-    detector_ = std::shared_ptr<Detector>(new MRCNNDetector(detector_config));
+  else if (detector_name == "mrcnndetector") {
+    detector_ = std::shared_ptr<Detector>(new MRCNNDetector(cfg_root + "/mrcnndetector.yml"));
   }
   else {
-    LOG(ERROR) << "Unrecognized detector name(which should be FRCNN or MRCNN): " << detector_name;
+    LOG(ERROR) << "Unrecognized detector name(which should be frcnndetector or mrcnndetector): " << detector_name;
   }
   // load matcher
-  auto matcher_node = fs["matcher"];
-  string matcher_name, matcher_config;
-  matcher_node["name"] >> matcher_name;
-  matcher_node["config"] >> matcher_config;
-  if (matcher_name == "RandomICP") {
-    matcher_ = std::shared_ptr<Matcher>(new RandomICPMatcher(matcher_config));
+  string matcher_name;
+  fs["matcher_name"] >> matcher_name;
+  if (matcher_name == "randomicpmatcher") {
+    matcher_ = std::shared_ptr<Matcher>(new RandomICPMatcher(cfg_root + "/randomicpmatcher.yml"));
   }
   else {
-    LOG(ERROR) << "Unrecognized matcher name(which should be RandomICP): " << detector_name;
+    LOG(ERROR) << "Unrecognized matcher name(which should be randomicpmatcher): " << detector_name;
   }
   // load params
   fs["max_match_error"] >> max_match_error_;
@@ -50,7 +46,7 @@ bool Vision::Process(const cv::Mat &color,
                      const cv::Mat &depth,
                      const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud) {
   // run detect
-  Utils::Timer timer;
+  Utils::Timer<std::chrono::milliseconds> timer;
   // @TODO: convert rgb in numpy array
   cv::Mat rgb;
   cv::cvtColor(color, rgb, cv::COLOR_BGR2RGB);
@@ -64,7 +60,7 @@ bool Vision::Process(const cv::Mat &color,
   cv::imwrite("detect_result.png", detector_->VisualizeResults(color, objects));
 #endif
 #ifdef ENABLE_TIMING
-  LOG(INFO) << "Detection time: " << timer;
+  LOG(INFO) << "Detection time: " << timer << "ms";
   timer.reset();
 #endif
   // get target pointcloud based on detect results
@@ -86,7 +82,7 @@ bool Vision::Process(const cv::Mat &color,
     return c1.mean_z < c2.mean_z;
   });
 #ifdef ENABLE_TIMING
-  LOG(INFO) << "Selection time: " << timer;
+  LOG(INFO) << "Selection time: " << timer << "ms";
   timer.reset();
 #endif
   // run match
@@ -97,7 +93,7 @@ bool Vision::Process(const cv::Mat &color,
       object_ = candidates[i].object;
       DLOG(INFO) << "Candidate " << i << " match successfully with error: " << error;
 #ifdef ENABLE_TIMING
-      LOG(INFO) << "Match time: " << timer;
+      LOG(INFO) << "Match time: " << timer << "ms";
 #endif
       return true;
     }

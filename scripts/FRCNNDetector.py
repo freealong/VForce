@@ -7,14 +7,13 @@ import numpy as np
 import tensorflow as tf
 print("All modules imported")
 
-#from object_detection.utils import label_map_util
-
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
-PROJECT_PATH = os.path.join(SCRIPT_PATH, os.pardir, os.pardir, os.pardir)
-CKPT_PATH = os.path.join(PROJECT_PATH, 'model', 'fast_rcnn.pb')
-#PATH_TO_LABELS = os.path.join(PROJECT_PATH, 'models/object_label_map.pbtxt')
+PROJECT_PATH = os.path.join(SCRIPT_PATH, os.pardir)
 
-#NUM_CLASSES = 2
+detection_graph = tf.Graph()
+
+with detection_graph.as_default():
+    sess = tf.Session(graph=detection_graph)
 
 def load_image_into_numpy_array(image):
     (im_width, im_height) = image.size
@@ -22,25 +21,18 @@ def load_image_into_numpy_array(image):
         (im_height, im_width, 3)).astype(np.uint8)
 
 # load a Tensofflow model into memory
-detection_graph = tf.Graph()
-with detection_graph.as_default():
-    od_graph_def = tf.GraphDef()
-    with tf.gfile.GFile(CKPT_PATH, 'rb') as fid:
-        serialized_graph = fid.read()
-        od_graph_def.ParseFromString(serialized_graph)
-        tf.import_graph_def(od_graph_def, name='')
-
-# Loading label map
-#label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-#categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
-#category_index = label_map_util.create_category_index(categories)
-
-with detection_graph.as_default():
-    sess = tf.Session(graph=detection_graph)
-
-print('Model init finished')
+def load_model(model):
+    with detection_graph.as_default():
+        od_graph_def = tf.GraphDef()
+        print("Detector:: load model from ", model)
+        with tf.gfile.GFile(model, 'rb') as fid:
+            serialized_graph = fid.read()
+            od_graph_def.ParseFromString(serialized_graph)
+            tf.import_graph_def(od_graph_def, name='')
+        print("Detector:: load model successfully")
 
 def detect(image_np, num=5, min_score=0.85):
+    print('Detector: run detecting...')
     width = image_np.shape[1]
     height = image_np.shape[0]
     res = detect_with_rotation(image_np, num=num, min_score=min_score)
@@ -70,7 +62,6 @@ def detect_with_rotation(image_np, num=5, min_score=0.9):
     classes = detection_graph.get_tensor_by_name('detection_classes:0')
     num_detections = detection_graph.get_tensor_by_name('num_detections:0')
     # Actual detection.
-    print('run detecting')
     (boxes, scores, classes, num_detections) = sess.run(
     [boxes, scores, classes, num_detections],
     feed_dict={image_tensor: image_np_expanded})
@@ -91,8 +82,10 @@ def detect_with_rotation(image_np, num=5, min_score=0.9):
 if __name__ == '__main__':
     import timeit
     from PIL import Image
-    image = Image.open(os.path.join(PROJECT_PATH, 'build', 'test_data', 'color1.png'))
+    apps_root = os.path.join(PROJECT_PATH, 'apps')
+    image = Image.open(os.path.join(apps_root, 'data', 'color_pad1.png'))
     image_np = load_image_into_numpy_array(image)
+    load_model(os.path.join(apps_root, 'pick_pad', 'model', 'frcnn.pb'))
     start = timeit.default_timer()
     box = detect(image_np)
     stop = timeit.default_timer()

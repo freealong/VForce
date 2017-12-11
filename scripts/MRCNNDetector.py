@@ -10,8 +10,7 @@ import model as modellib
 print("All module imported")
 
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
-PROJECT_PATH = os.path.join(SCRIPT_PATH, os.pardir, os.pardir, os.pardir)
-MODEL_PATH = os.path.join(PROJECT_PATH, "model", "mask_rcnn.h5")
+PROJECT_PATH = os.path.join(SCRIPT_PATH, os.pardir)
 
 class InferenceConfig(wpif.WPIFConfig):
     # Set batch size to 1 since we'll be running inference on
@@ -25,9 +24,11 @@ config = InferenceConfig()
 # Create model object in inference mode.
 model = modellib.MaskRCNN(mode="inference", config=config, model_dir='')
 
-# Load weights trained on MS-COCO
-model.load_weights(MODEL_PATH, by_name=True)
-print("Load weights finished")
+# Load weights
+def load_model(model_weights):
+    print("Detector: load model from ", model_weights)
+    model.load_weights(model_weights, by_name=True)
+    print("Detector: load model successfully")
 
 def detect(image_np, max_num=5, min_score=0.9):
     r = model.single_detect(image_np, min_score)
@@ -42,7 +43,9 @@ def detect(image_np, max_num=5, min_score=0.9):
     return results
 
 if __name__ == '__main__':
+    apps_root = os.path.join(PROJECT_PATH, 'apps')
+    load_model(os.path.join(apps_root, 'pick_pad', 'model', 'mrcnn.h5'))
     import skimage.io
-    image = skimage.io.imread(os.path.join(PROJECT_PATH, 'build', 'test_data', 'color1.png'))
+    image = skimage.io.imread(os.path.join(apps_root, 'data', 'color_pad1.png'))
     results = detect(image)
     print(len(results))

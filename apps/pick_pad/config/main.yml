@@ -1,0 +1,17 @@
+%YAML:1.0
+---
+gui: {
+    width: 1280,
+    height: 960
+    }
+
+tcp: {
+    ip: "127.0.0.1",
+    port: 8000
+    }
+
+core: {
+    camera_name: "Realsense", # only support Realsense now
+    vision_cfg: "vision.yml",
+    robot_cfg: "robot.yml"
+    }

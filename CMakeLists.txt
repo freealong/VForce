@@ -44,16 +44,16 @@ link_directories(${PCL_LIBRARY_DIRS})
 # Project subdirectories
 include_directories(${SRC_DIR})
 
+if (ENABLE_TIMING)
+    add_definitions(-DENABLE_TIMING)
+endif ()
+
 add_subdirectory(${SRC_DIR}/utils)
 add_subdirectory(${SRC_DIR}/camera)
 add_subdirectory(${SRC_DIR}/vision)
 add_subdirectory(${SRC_DIR}/robot)
 
 # Setting by manual options
-if (ENABLE_TIMING)
-    add_definitions(-DENABLE_TIMING)
-endif ()
-
 if (ENABLE_TEST)
     # @TODO: add tests
 #    add_subdirectory(tests)

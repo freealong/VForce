@@ -11,10 +11,10 @@
 namespace VForce {
 namespace Utils {
 
+template <typename timestep>
 class Timer {
  public:
   typedef std::chrono::high_resolution_clock clock;
-  typedef std::chrono::nanoseconds timestep;
 
   Timer() {
     reset();

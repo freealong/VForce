@@ -1,0 +1,6 @@
+%YAML:1.0
+---
+# path include detector's .py file
+script_path: "../scripts"
+script_name: "MRCNNDetector"
+model: "../apps/pick_pad/model/mrcnn.h5"
