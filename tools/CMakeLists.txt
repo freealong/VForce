@@ -1,0 +1,16 @@
+project(VForce-tools)
+
+add_executable(data_collector ${CMAKE_CURRENT_SOURCE_DIR}/data_collector.cpp)
+target_link_libraries(data_collector vforce_camera vforce_utils)
+
+add_executable(view_rgbd ${CMAKE_CURRENT_SOURCE_DIR}/view_rgbd.cpp)
+target_link_libraries(view_rgbd vforce_camera vforce_utils)
+
+add_executable(pose2matrix ${CMAKE_CURRENT_SOURCE_DIR}/pose2matrix.cpp)
+target_link_libraries(pose2matrix vforce_utils)
+
+add_executable(process_model ${CMAKE_CURRENT_SOURCE_DIR}/process_model.cpp)
+target_link_libraries(process_model vforce_utils)
+
+add_executable(tcpclient ${CMAKE_CURRENT_SOURCE_DIR}/tcpclient.cpp)
+target_link_libraries(tcpclient)

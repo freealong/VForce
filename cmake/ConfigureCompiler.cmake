@@ -1,0 +1,20 @@
+if(NOT CMAKE_BUILD_TYPE STREQUAL "release")
+  add_definitions(-DDEBUG)
+endif()
+
+if (MSVC)
+    message(FATAL_ERROR "MSVC are not support now")
+else()
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        if(CMAKE_BUILD_TYPE STREQUAL "Release")
+            # enable openmp
+            find_package(OpenMP)
+            if (OPENMP_FOUND)
+                set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+                set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+            endif()
+        endif()
+    endif()
+endif()
+
+set (CMAKE_CXX_STANDARD 11)
