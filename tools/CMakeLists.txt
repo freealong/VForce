@@ -1,5 +1,11 @@
 project(VForce-tools)
 
+option(ENABLE_ROBOCAMCAL "Enable build robocamcal" TRUE)
+
+if (ENABLE_ROBOCAMCAL)
+    add_subdirectory(robocamcal)
+endif ()
+
 add_executable(data_collector ${CMAKE_CURRENT_SOURCE_DIR}/data_collector.cpp)
 target_link_libraries(data_collector vforce_camera vforce_utils)
 

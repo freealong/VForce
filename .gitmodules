@@ -1,0 +1,3 @@
+[submodule "tools/robocamcal"]
+	path = tools/robocamcal
+	url = git@github.com:freealong/RoboCamCal.git
