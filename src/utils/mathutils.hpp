@@ -62,25 +62,13 @@ template<typename T>
 void pose2matrix(const T &x, const T &y, const T &z,
                  const T &roll, const T &pitch, const T &yaw,
                  Eigen::Matrix<T, 4, 4> &t) {
-  T A = cos(yaw), B = sin(yaw), C = cos(pitch), D = sin(pitch),
-      E = cos(roll), F = sin(roll), DE = D * E, DF = D * F;
+  T A = cos(yaw),  B = sin(yaw),  C = cos(pitch), D = sin (pitch),
+      E = cos(roll), F = sin(roll), DE = D*E,       DF = D*F;
 
-  t(0, 0) = A * C;
-  t(0, 1) = A * DF - B * E;
-  t(0, 2) = B * F + A * DE;
-  t(0, 3) = x;
-  t(1, 0) = B * C;
-  t(1, 1) = A * E + B * DF;
-  t(1, 2) = B * DE - A * F;
-  t(1, 3) = y;
-  t(2, 0) = -D;
-  t(2, 1) = C * F;
-  t(2, 2) = C * E;
-  t(2, 3) = z;
-  t(3, 0) = 0;
-  t(3, 1) = 0;
-  t(3, 2) = 0;
-  t(3, 3) = 1;
+  t(0, 0) = A*C;  t(0, 1) = A*DF - B*E;  t(0, 2) = B*F + A*DE;  t(0, 3) = x;
+  t(1, 0) = B*C;  t(1, 1) = A*E + B*DF;  t(1, 2) = B*DE - A*F;  t(1, 3) = y;
+  t(2, 0) = -D;   t(2, 1) = C*F;         t(2, 2) = C*E;         t(2, 3) = z;
+  t(3, 0) = 0;    t(3, 1) = 0;           t(3, 2) = 0;           t(3, 3) = 1;
 }
 
 /**
@@ -102,7 +90,7 @@ void matrix2pose(const Eigen::Matrix<T, 4, 4> &t,
   y = t(1, 3);
   z = t(2, 3);
   roll = atan2(t(2, 1), t(2, 2));
-  pitch = asin(-t(2, 0));
+  pitch = atan2(-t(2, 0), sqrt(t(2, 1) * t(2, 1) + t(2, 2) * t(2, 2)));
   yaw = atan2(t(1, 0), t(0, 0));
 }
 

@@ -34,11 +34,14 @@ bool RealSenseCamera::Start() {
   // warm up camera
   for (int i = 0; i < 30; ++i)
     dev_->wait_for_frames();
-  // read camera params
-  ReadCameraParams();
-  depth_scale_ = dev_->get_depth_scale();
+  // get camera params.
+  // If user_calibration then we have already load the camera params,
+  // else we should load camera params from the camera.
   if (user_calibration_)
     depth_image_ = new uint16_t[r_width_ * r_height_];
+  else
+    ReadCameraParams();
+  depth_scale_ = dev_->get_depth_scale();
   running_ = true;
 }
 
@@ -154,8 +157,12 @@ bool RealSenseCamera::LoadCalibration(const std::string &cfg_file) {
     user_calibration_ = false;
     return false;
   }
+  fs["r_width"] >> r_width_;
+  fs["r_height"] >> r_height_;
   fs["r_intrin"] >> r_intrin_;
   fs["r_coeffs"] >> r_coeffs_;
+  fs["d_width"] >> d_width_;
+  fs["d_height"] >> d_height_;
   fs["d_intrin"] >> d_intrin_;
   fs["d_coeffs"] >> d_coeffs_;
   fs["dMr"] >> dMr_;
@@ -171,8 +178,12 @@ bool RealSenseCamera::SaveCalibration(const std::string &cfg_file) {
     LOG(ERROR) << "Can't Open file: " << cfg_file << endl;
     return false;
   }
+  fs << "r_width" << r_width_;
+  fs << "r_height" << r_height_;
   fs << "r_intrin" << r_intrin_;
   fs << "r_coeffs" << r_coeffs_;
+  fs << "d_width" << d_width_;
+  fs << "d_height" << d_height_;
   fs << "d_intrin" << d_intrin_;
   fs << "d_coeffs" << d_coeffs_;
   fs << "dMr" << dMr_;

@@ -14,3 +14,6 @@ target_link_libraries(process_model vforce_utils)
 
 add_executable(tcpclient ${CMAKE_CURRENT_SOURCE_DIR}/tcpclient.cpp)
 target_link_libraries(tcpclient)
+
+add_executable(get_camera_params ${CMAKE_CURRENT_SOURCE_DIR}/get_camera_params.cpp)
+target_link_libraries(get_camera_params vforce_camera)
