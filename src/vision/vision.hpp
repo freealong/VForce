@@ -12,7 +12,7 @@ namespace VForce {
 
 class Vision {
  public:
-  Vision(std::string cfg_root, std::string cfg_file = "vision.yml");
+  Vision(std::string cfg_file = "vision.yml", std::string cfg_root = ".");
 
   bool Process(const cv::Mat &color, const cv::Mat &depth,
                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud);

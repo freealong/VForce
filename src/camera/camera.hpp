@@ -13,7 +13,7 @@ namespace VForce {
 
 class Camera {
  public:
-  Camera() : running_(false) {}
+  Camera() : running_(false), cfg_root_(".") {}
   virtual bool Start() = 0;
   virtual void Stop() = 0;
   /**
@@ -75,6 +75,7 @@ class Camera {
   void Transform(float point1[3], const cv::Mat &extrin, float point2[3]) const;
 
   bool running_;
+  std::string cfg_root_;
 };
 
 }

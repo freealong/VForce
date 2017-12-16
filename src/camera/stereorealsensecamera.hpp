@@ -15,7 +15,7 @@ namespace VForce {
 
 class StereoRealsenseCamera : public Camera {
  public:
-  StereoRealsenseCamera(const std::string &cfg_file);
+  StereoRealsenseCamera(const std::string &cfg_file = "StereoRealsenseCamera.yml", const std::string &cfg_root = ".");
   virtual bool Start();
   virtual void Stop();
   virtual void Update();

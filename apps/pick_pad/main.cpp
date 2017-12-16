@@ -20,6 +20,7 @@
 #include "utils/synctcpserver.hpp"
 #include "utils/pointcloudutils.hpp"
 #include "camera/realsensecamera.hpp"
+#include "camera/stereorealsensecamera.hpp"
 #include "camera/virtualcamera.hpp"
 #include "vision/vision.hpp"
 #include "robot/robot.hpp"
@@ -155,14 +156,17 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
       camera = shared_ptr<Camera>(new RealSenseCamera);
 //    camera->LoadCalibration(camera_param);
     }
+    else if (camera_name == "StereoRealsense") {
+      camera = shared_ptr<Camera>(new StereoRealsenseCamera(camera_name + ".yml", FLAGS_config_root));
+    }
     else {
-      LOG(ERROR) << "Unrecognized Camera name(should be RealSense): " << camera_name;
+      LOG(ERROR) << "Unrecognized Camera name(should be Realsense or StereoRealsenseCamera): " << camera_name;
     }
   }
   camera->Start();
   cv::Mat color, depth;
 
-  Vision vision(FLAGS_config_root, vision_cfg);
+  Vision vision(vision_cfg, FLAGS_config_root);
   Robot robot(FLAGS_config_root + "/" + robot_cfg);
 
   while (true) {

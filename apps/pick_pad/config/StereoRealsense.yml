@@ -1,0 +1,5 @@
+%YAML:1.0
+---
+left_camera: lcamParams.yml
+right_camera: rcamParams.yml
+stereo: stereo.yml

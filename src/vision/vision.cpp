@@ -14,7 +14,7 @@ using namespace std;
 
 namespace VForce {
 
-Vision::Vision(std::string cfg_root, std::string cfg_file) : transformed_model_(new pcl::PointCloud<pcl::PointXYZ>) {
+Vision::Vision(std::string cfg_file, std::string cfg_root) : transformed_model_(new pcl::PointCloud<pcl::PointXYZ>) {
   cv::FileStorage fs(cfg_root + "/" + cfg_file, cv::FileStorage::READ);
   // load detector
   string detector_name;
