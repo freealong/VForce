@@ -43,6 +43,7 @@ bool RealSenseCamera::Start() {
     ReadCameraParams();
   depth_scale_ = dev_->get_depth_scale();
   running_ = true;
+  return true;
 }
 
 void RealSenseCamera::Stop() {
@@ -61,7 +62,9 @@ void RealSenseCamera::Update() {
     if (!user_calibration_)
       depth_image_ = (uint16_t *) dev_->get_frame_data(rs::stream::depth_aligned_to_color);
     else {
-      Align2Color((uint16_t *) dev_->get_frame_data(rs::stream::depth), depth_image_);
+      Align2Other((uint16_t *) dev_->get_frame_data(rs::stream::depth), d_height_, d_width_,
+                  d_intrin_, d_coeffs_, depth_image_, r_height_, r_width_, r_intrin_, r_coeffs_,
+                  rMd_, depth_scale_);
     }
   } else {
     LOG(ERROR) << "start the camera first !!!" << endl;
@@ -88,8 +91,8 @@ void RealSenseCamera::FetchDepth(cv::Mat &depth) {
 
 void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud_ptr) {
   cloud_ptr->clear();
-  cloud_ptr->height = d_height_;
-  cloud_ptr->width = d_width_;
+  cloud_ptr->height = static_cast<unsigned>(d_height_);
+  cloud_ptr->width = static_cast<unsigned>(d_width_);
   cloud_ptr->points.resize(cloud_ptr->width * cloud_ptr->height);
   // convert depth to pointcloud
   for (int dy = 0; dy < cloud_ptr->height; ++dy) {
@@ -118,8 +121,8 @@ void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud
 
 void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_ptr) {
   cloud_ptr->clear();
-  cloud_ptr->height = d_height_;
-  cloud_ptr->width = d_width_;
+  cloud_ptr->height = static_cast<unsigned>(d_height_);
+  cloud_ptr->width = static_cast<unsigned>(d_width_);
   cloud_ptr->points.resize(cloud_ptr->width * cloud_ptr->height);
   // convert depth to pointcloud
   for (int dy = 0; dy < cloud_ptr->height; ++dy) {
@@ -245,95 +248,6 @@ void RealSenseCamera::ReadCameraParams() {
     rMd_.at<double>(r, 3) = d2c_tra[r];
   }
   dMr_ = rMd_.inv();
-}
-
-void RealSenseCamera::Align2Color(uint16_t *depth_image, uint16_t *aligned_depth_image) {
-  assert(depth_image != nullptr);
-  assert(aligned_depth_image != nullptr);
-  assert(depth_image != aligned_depth_image);
-  int size = r_width_ * r_height_;
-#pragma omp parallel for schedule(dynamic)
-  for (int i = 0; i < size; ++i)
-    aligned_depth_image[i] = 0;
-#pragma omp parallel for schedule(dynamic)
-  for (int dy = 0; dy < d_height_; ++dy) {
-    int dxy = dy * d_width_;
-    for (int dx = 0; dx < d_width_; ++dx, ++dxy) {
-      if (float depth = depth_image[dxy]) {
-        // convert depth pixel(u,v) to depth point(x,y,z)
-        // Map the top-left corner of the depth pixel onto the other image
-        float depth_in_meter = depth * depth_scale_;
-        float depth_pixel[2] = {dx - 0.5f, dy - 0.5f}, depth_point[3], other_point[3], other_pixel[2];
-        Deproject(depth_pixel, depth_in_meter, d_intrin_, d_coeffs_, depth_point);
-        Transform(depth_point, rMd_, other_point);
-        Project(other_point, r_intrin_, r_coeffs_, other_pixel);
-        const int other_x0 = static_cast<int>(other_pixel[0] + 0.5f);
-        const int other_y0 = static_cast<int>(other_pixel[1] + 0.5f);
-
-        // Map the bottom-right corner of the depth pixel onto the other image
-        depth_pixel[0] = dx + 0.5f;
-        depth_pixel[1] = dy + 0.5f;
-        Deproject(depth_pixel, depth_in_meter, d_intrin_, d_coeffs_, depth_point);
-        Transform(depth_point, rMd_, other_point);
-        Project(other_point, r_intrin_, r_coeffs_, other_pixel);
-        const int other_x1 = static_cast<int>(other_pixel[0] + 0.5f);
-        const int other_y1 = static_cast<int>(other_pixel[1] + 0.5f);
-
-        if (other_x0 < 0 || other_y0 < 0 || other_x1 >= r_width_ || other_y1 >= r_height_)
-          continue;
-
-        // Transfer between the depth pixels and the pixels inside the rectangle on the other image
-        for (int y = other_y0; y <= other_y1; ++y)
-          for (int x = other_x0; x <= other_x1; ++x)
-            aligned_depth_image[y * r_width_ + x] = depth_image[dxy];
-      }
-    }
-  }
-}
-
-void RealSenseCamera::Deproject(float *pixel,
-                                float depth,
-                                const cv::Mat &intrin,
-                                const cv::Mat &coeffs,
-                                float *point) const {
-  float x = (pixel[0] - intrin.at<double>(0, 2)) / intrin.at<double>(0, 0);
-  float y = (pixel[1] - intrin.at<double>(1, 2)) / intrin.at<double>(1, 1);
-  {
-    float r2 = x * x + y * y;
-    float f = 1 + coeffs.at<double>(0) * r2 + coeffs.at<double>(1) * r2 * r2 + coeffs.at<double>(4) * r2 * r2 * r2;
-    float ux = x * f + 2 * coeffs.at<double>(2) * x * y + coeffs.at<double>(3) * (r2 + 2 * x * x);
-    float uy = y * f + 2 * coeffs.at<double>(3) * x * y + coeffs.at<double>(2) * (r2 + 2 * y * y);
-    x = ux;
-    y = uy;
-  }
-  point[0] = depth * x;
-  point[1] = depth * y;
-  point[2] = depth;
-}
-
-void RealSenseCamera::Project(float *point, const cv::Mat &intrin, const cv::Mat &coeffs, float *pixel) const {
-  float x = point[0] / point[2], y = point[1] / point[2];
-  {
-    float r2 = x * x + y * y;
-    float f = 1 + coeffs.at<double>(0) * r2 + coeffs.at<double>(1) * r2 * r2 + coeffs.at<double>(4) * r2 * r2 * r2;
-    x *= f;
-    y *= f;
-    float dx = x * f + 2 * coeffs.at<double>(2) * x * y + coeffs.at<double>(3) * (r2 + 2 * x * x);
-    float dy = y * f + 2 * coeffs.at<double>(3) * x * y + coeffs.at<double>(2) * (r2 + 2 * y * y);
-    x = dx;
-    y = dy;
-  }
-  pixel[0] = x * intrin.at<double>(0, 0) + intrin.at<double>(0, 2);
-  pixel[1] = y * intrin.at<double>(1, 1) + intrin.at<double>(1, 2);
-}
-
-void RealSenseCamera::Transform(float *point1, const cv::Mat &extrin, float *point2) const {
-  point2[0] = extrin.at<double>(0, 0) * point1[0] + extrin.at<double>(0, 1) * point1[1] +
-      extrin.at<double>(0, 2) * point1[2] + extrin.at<double>(0, 3);
-  point2[1] = extrin.at<double>(1, 0) * point1[0] + extrin.at<double>(1, 1) * point1[1] +
-      extrin.at<double>(1, 2) * point1[2] + extrin.at<double>(1, 3);
-  point2[2] = extrin.at<double>(2, 0) * point1[0] + extrin.at<double>(2, 1) * point1[1] +
-      extrin.at<double>(2, 2) * point1[2] + extrin.at<double>(2, 3);
 }
 
 }

@@ -35,40 +35,6 @@ class RealSenseCamera : public Camera {
   // read camera params from camera flash
   void ReadCameraParams();
 
-  /**
-   * Align depth image to color image coordinate
-   * @param depth_image
-   * @param aligned_depth_image
-   */
-  void Align2Color(uint16_t *depth_image, uint16_t *aligned_depth_image);
-
-  /**
-   * deproject pixel to 3d point
-   * @param pixel pixel in image coordinate
-   * @param depth pixel depth
-   * @param intrin image intrin matrix
-   * @param coeffs image coeffs
-   * @param point 3d point in camera coordinate
-   */
-  void Deproject(float pixel[2], float depth, const cv::Mat &intrin, const cv::Mat &coeffs, float point[3]) const;
-
-  /**
-   * project 3d point to pixel
-   * @param point  3d point in camera coordinate
-   * @param intrin
-   * @param coeffs
-   * @param pixel pixel in image coordinate
-   */
-  void Project(float point[3], const cv::Mat &intrin, const cv::Mat &coeffs, float pixel[2]) const;
-
-  /**
-   * transform transform 3d point based on given tranformation
-   * @param point1 input 3d point
-   * @param extrin given tranformation matrix
-   * @param point2 output 3d point
-   */
-  void Transform(float point1[3], const cv::Mat &extrin, float point2[3]) const;
-
  private:
   std::shared_ptr<context> context_;
   device *dev_;
