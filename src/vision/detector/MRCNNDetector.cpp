@@ -1,32 +1,32 @@
 //
-// Created by yongqi on 17-7-18.
+// Created by yongqi on 17-11-29.
 //
 
 #include <glog/logging.h>
-#include "frcnndetector.hpp"
+#include "MRCNNDetector.hpp"
 
 namespace VForce {
 
 using namespace std;
 
-FRCNNDetector::FRCNNDetector(const string &cfg_file) {
-  LOG(INFO) << "Load config file from: " << cfg_file;
-  cv::FileStorage fs(cfg_file, cv::FileStorage::READ);
+MRCNNDetector::MRCNNDetector(const std::string &cfg_root, const std::string &cfg_file) : Detector(cfg_root, cfg_file) {
+  auto cfg_path = cfg_root_ + "/" + cfg_file_;
+  LOG(INFO) << "Load config file from: " << cfg_path;
+  cv::FileStorage fs(cfg_path, cv::FileStorage::READ);
   if (!fs.isOpened()) {
-    LOG(ERROR) << "Open config file failed: " << cfg_file;
+    LOG(ERROR) << "Open config file failed: " << cfg_path;
   }
   string script_path, script_name, model;
   fs["script_path"] >> script_path;
   fs["script_name"] >> script_name;
   fs["model"] >> model;
   Py_Initialize();
-  // add script_path to python path
   if (!script_path.empty()) {
     PyRun_SimpleString("import sys");
     string append_path = "sys.path.append('" + script_path + "')";
     PyRun_SimpleString(append_path.c_str());
   }
-  // import FRCNNDetector.py
+  // import module
   PyObject *pName;
   pName = PyUnicode_FromString(script_name.c_str());
   pModule_ = PyImport_Import(pName);
@@ -35,11 +35,12 @@ FRCNNDetector::FRCNNDetector(const string &cfg_file) {
   PyObject *pArgs = PyTuple_New(1);
   PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(model.c_str()));
   PyObject_CallObject(fun, pArgs);
-  // load function detect
+  // load detect function
   pfun_ = PyObject_GetAttrString(pModule_, "detect");
 }
 
-bool FRCNNDetector::Detect(const cv::Mat &img, DetectorResults &reslults) {
+// @FIXME: mask is not right
+bool MRCNNDetector::Detect(const cv::Mat &img, DetectorResults &results) {
   NDArrayConverter converter;
   PyObject *img_ndarray = converter.toNDArray(img);
   PyObject *pArgs = PyTuple_New(1);
@@ -50,33 +51,27 @@ bool FRCNNDetector::Detect(const cv::Mat &img, DetectorResults &reslults) {
   if (size == 0) {
     return false;
   } else {
-    reslults.clear();
+    results.clear();
     for (int i = 0; i < size; ++i) {
       ObjectInfo object;
+      PyObject *res = PyList_GetItem(pRes, i);
       // get rect
-      auto &rect = object.rect_;
-      int xmin, ymin, xmax, ymax;
-      PyObject *box = PyList_GetItem(pRes, i);
-      xmin = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 0)));
-      ymin = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 1)));
-      xmax = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 2)));
-      ymax = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 3)));
-      // make index start with 0
-      rect.x = xmin - 1;
-      rect.y = ymin - 1;
-      rect.width = xmax - xmin;
-      rect.height = ymax - ymin;
+      cv::Rect &rect = object.rect_;
+      PyObject *box = PyList_GetItem(res, 0);
+      rect.x = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 0)));
+      rect.y = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 1)));
+      rect.width = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 2)));
+      rect.height = static_cast<int>(PyLong_AsLong(PyList_GetItem(box, 3)));
       assert(rect.x >= 0 && rect.y >= 0 && rect.x + rect.width < img.cols && rect.y + rect.height < img.rows);
-      // @TODO: class id are not available
-      object.valid_mask_ = false;
-      object.id_ = 1;
-      reslults.emplace_back(object);
+      // get mask
+      PyObject *mask = PyList_GetItem(res, 1);
+      object.mask_ = converter.toMat(mask);
+      object.valid_mask_ = true;
+      // get class_id
+      PyObject *class_id = PyList_GetItem(res, 2);
+      object.id_ = static_cast<int>(PyLong_AsLong(class_id));
+      results.emplace_back(object);
     }
-  }
-  // using segment to get object mask
-  for (auto &r : reslults) {
-    r.mask_ = segment_.GetSegmentMask(img(r.rect_));
-    r.valid_mask_ = true;
   }
   return true;
 }

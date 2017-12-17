@@ -5,14 +5,14 @@
 #ifndef VFORCE_VISION_HPP
 #define VFORCE_VISION_HPP
 
-#include "detector/detector.hpp"
-#include "matcher/matcher.hpp"
+#include "vision/detector/Detector.hpp"
+#include "vision/matcher/Matcher.hpp"
 
 namespace VForce {
 
 class Vision {
  public:
-  Vision(std::string cfg_file = "vision.yml", std::string cfg_root = ".");
+  Vision(std::string cfg_root = ".", std::string cfg_file = "Vision.yml");
 
   bool Process(const cv::Mat &color, const cv::Mat &depth,
                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud);

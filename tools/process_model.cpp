@@ -4,7 +4,7 @@
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/transforms.h>
-#include "utils/pointcloudutils.hpp"
+#include "utils/PointCloudUtils.hpp"
 
 using namespace std;
 using namespace pcl;

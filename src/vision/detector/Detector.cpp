@@ -2,8 +2,8 @@
 // Created by yongqi on 17-12-7.
 //
 
-#include "detector.hpp"
-#include "utils/cvutils.hpp"
+#include "Detector.hpp"
+#include "utils/CVUtils.hpp"
 
 namespace VForce {
 

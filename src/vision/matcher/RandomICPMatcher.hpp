@@ -5,13 +5,13 @@
 #ifndef VFORCE_RANDOMICPMATCHER_HPP
 #define VFORCE_RANDOMICPMATCHER_HPP
 
-#include "matcher.hpp"
+#include "Matcher.hpp"
 
 namespace VForce {
 
 class RandomICPMatcher : public Matcher {
  public:
-  RandomICPMatcher(const std::string &cfg_file = "RandomICPMatcher.yml");
+  RandomICPMatcher(const std::string &cfg_root = ".", const std::string &cfg_file = "RandomICPMatcher.yml");
 
   virtual bool LoadConfig(const std::string &cfg_file);
 

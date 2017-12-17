@@ -5,7 +5,7 @@
 #ifndef VFORCE_REALSENSECAMERA_HPP
 #define VFORCE_REALSENSECAMERA_HPP
 
-#include "camera.hpp"
+#include "Camera.hpp"
 
 // Forward Declaration
 class context;
@@ -13,9 +13,11 @@ class device;
 
 namespace VForce {
 
-class RealSenseCamera : public Camera {
+class RealsenseCamera : public Camera {
  public:
-  RealSenseCamera(int decive_id = 0);
+  RealsenseCamera(bool manual_calibration = true,
+                  const std::string &cfg_root = ".",
+                  const std::string &cfg_file = "RealsenseCamera.yml");
   virtual bool Start();
   virtual void Stop();
   virtual void Update();
@@ -26,7 +28,7 @@ class RealSenseCamera : public Camera {
   virtual bool LoadCalibration(const std::string &cfg_file);
   virtual bool SaveCalibration(const std::string &cfg_file);
 
-  ~RealSenseCamera() {
+  ~RealsenseCamera() {
     if (running_)
       Stop();
   }

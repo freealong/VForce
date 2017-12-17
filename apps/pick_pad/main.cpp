@@ -16,15 +16,15 @@
 #include <glog/logging.h>
 
 // User Defined
-#include "utils/glcloudviewer.hpp"
-#include "utils/synctcpserver.hpp"
-#include "utils/pointcloudutils.hpp"
-#include "camera/realsensecamera.hpp"
-#include "camera/stereorealsensecamera.hpp"
-#include "camera/virtualcamera.hpp"
-#include "vision/vision.hpp"
-#include "robot/robot.hpp"
-#include "message.hpp"
+#include "utils/GLCloudViewer.hpp"
+#include "utils/SyncTCPServer.hpp"
+#include "utils/PointCloudUtils.hpp"
+#include "camera/RealsenseCamera.hpp"
+#include "camera/StereoRealsenseCamera.hpp"
+#include "camera/VirtualCamera.hpp"
+#include "vision/Vision.hpp"
+#include "robot/Robot.hpp"
+#include "Message.hpp"
 
 using namespace std;
 using namespace pcl;
@@ -133,8 +133,9 @@ void GUIThread(int width, int height, string name, RequestType &request,
 
 /**
  * Vision Thread detect the target and calcuate the target's pose
- * @param handler_cfg vision config file
- * @param robot_cfg robot config file
+ * @param camera_name
+ * @param vision_cfg
+ * @param robot_cfg
  * @param tcp_request tcp request signal
  * @param flag
  * @param target_pose target pose in robot coordinate
@@ -153,21 +154,21 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
     camera = shared_ptr<Camera>(new VirtualCamera(FLAGS_virtual_camera_path));
   else {
     if (camera_name == "Realsense") {
-      camera = shared_ptr<Camera>(new RealSenseCamera);
+      camera = shared_ptr<Camera>(new RealsenseCamera(true, FLAGS_config_root));
 //    camera->LoadCalibration(camera_param);
     }
     else if (camera_name == "StereoRealsense") {
-      camera = shared_ptr<Camera>(new StereoRealsenseCamera(camera_name + ".yml", FLAGS_config_root));
+      camera = shared_ptr<Camera>(new StereoRealsenseCamera(FLAGS_config_root));
     }
     else {
-      LOG(ERROR) << "Unrecognized Camera name(should be Realsense or StereoRealsenseCamera): " << camera_name;
+      LOG(ERROR) << "Unrecognized Camera name(should be Realsense or StereoRealsense): " << camera_name;
     }
   }
   camera->Start();
   cv::Mat color, depth;
 
-  Vision vision(vision_cfg, FLAGS_config_root);
-  Robot robot(FLAGS_config_root + "/" + robot_cfg);
+  Vision vision(FLAGS_config_root, vision_cfg);
+  Robot robot(FLAGS_config_root, robot_cfg);
 
   while (true) {
     if (g_close)

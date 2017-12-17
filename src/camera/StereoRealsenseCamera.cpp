@@ -6,14 +6,15 @@
 using rs::context;
 using rs::device;
 
-#include "stereorealsensecamera.hpp"
+#include "StereoRealsenseCamera.hpp"
 #include <glog/logging.h>
 
 namespace VForce {
 
 using namespace std;
 
-StereoRealsenseCamera::StereoRealsenseCamera(const std::string &cfg_file, const std::string &cfg_root) {
+StereoRealsenseCamera::StereoRealsenseCamera(const std::string &cfg_root, const std::string &cfg_file) :
+    Camera(cfg_root, cfg_file) {
   context_ = std::shared_ptr<context>(new context);
   int device_count = context_->get_device_count();
   if (device_count < 2) {
@@ -21,8 +22,7 @@ StereoRealsenseCamera::StereoRealsenseCamera(const std::string &cfg_file, const 
   }
   left_dev_ = context_->get_device(0);
   right_dev_ = context_->get_device(1);
-  cfg_root_ = cfg_root;
-  LoadCalibration(cfg_file);
+  LoadCalibration(cfg_file_);
 }
 
 bool StereoRealsenseCamera::Start() {
@@ -182,24 +182,27 @@ void StereoRealsenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::
 bool StereoRealsenseCamera::LoadCalibration(const std::string &cfg_file) {
   cv::FileStorage fs(cfg_root_ + "/" + cfg_file, cv::FileStorage::READ);
   if (!fs.isOpened()) {
-    LOG(ERROR) << "No such config file: " << cfg_file << endl;
+    LOG(ERROR) << "No such config file: " << cfg_root_ + "/" + cfg_file << endl;
     return false;
   }
   string left_camera_cfg, right_camera_cfg, stereo_cfg;
   fs["left_camera"] >> left_camera_cfg;
-  cv::FileStorage left_camera(cfg_root_ + "/" + left_camera_cfg, cv::FileStorage::READ);
+  left_camera_cfg = cfg_root_ +  "/" + left_camera_cfg;
+  cv::FileStorage left_camera(left_camera_cfg, cv::FileStorage::READ);
   if (!left_camera.isOpened()) {
     LOG(ERROR) << "No such config file: " << left_camera_cfg << endl;
     return false;
   }
   fs["right_camera"] >> right_camera_cfg;
-  cv::FileStorage right_camera(cfg_root_ + "/" + right_camera_cfg, cv::FileStorage::READ);
+  right_camera_cfg = cfg_root_ +  "/" + right_camera_cfg;
+  cv::FileStorage right_camera(right_camera_cfg, cv::FileStorage::READ);
   if (!right_camera.isOpened()) {
     LOG(ERROR) << "No such config file: " << right_camera_cfg << endl;
     return false;
   }
   fs["stereo"] >> stereo_cfg;
-  cv::FileStorage stereo(cfg_root_ + "/" + stereo_cfg, cv::FileStorage::READ);
+  stereo_cfg = cfg_root_ +  "/" + stereo_cfg;
+  cv::FileStorage stereo(stereo_cfg, cv::FileStorage::READ);
   if (!stereo.isOpened()) {
     LOG(ERROR) << "No such config file: " << stereo_cfg << endl;
     return false;

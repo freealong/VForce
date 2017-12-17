@@ -7,9 +7,10 @@
 #include <pcl/io/pcd_io.h>
 
 // User Defined
-#include "camera/realsensecamera.hpp"
-#include "utils/glcloudviewer.hpp"
-#include "utils/cvutils.hpp"
+#include "camera/RealsenseCamera.hpp"
+#include "camera/StereoRealsenseCamera.hpp"
+#include "utils/GLCloudViewer.hpp"
+#include "utils/CVUtils.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // Main function
@@ -34,7 +35,7 @@ int main(int argc, char **argv) {
   cout << "initialize PointCloudHandler successfully" << endl;
 
   // using camera variables
-  shared_ptr<Camera> camera(new RealSenseCamera(0));
+  shared_ptr<Camera> camera(new RealsenseCamera(true, "../config"));
 //  camera->LoadCalibration("../config/camera.yml");
   cv::Mat color, depth;
   camera->Start();

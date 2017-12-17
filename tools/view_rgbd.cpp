@@ -10,8 +10,9 @@
 // 3rd Libraries
 
 // User Defined
-#include "camera/realsensecamera.hpp"
-#include "utils/cvutils.hpp"
+#include "camera/RealsenseCamera.hpp"
+#include "camera/StereoRealsenseCamera.hpp"
+#include "utils/CVUtils.hpp"
 
 using namespace std;
 using namespace VForce;
@@ -20,7 +21,7 @@ using namespace VForce;
 // Main function
 /////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
-  shared_ptr<Camera> camera(new RealSenseCamera(0));
+  shared_ptr<Camera> camera(new RealsenseCamera(true, "../config"));
   camera->Start();
 
   cv::namedWindow("Depth Frame", 1);

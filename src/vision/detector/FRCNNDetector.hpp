@@ -5,15 +5,15 @@
 #ifndef VFORCE_FRCNNDETECTOR_HPP
 #define VFORCE_FRCNNDETECTOR_HPP
 
-#include "detector.hpp"
-#include "pythonconversion.hpp"
-#include "linesegment.hpp"
+#include "Detector.hpp"
+#include "NDArrayConverter.hpp"
+#include "LineSegment.hpp"
 
 namespace VForce {
 
 class FRCNNDetector : public Detector {
  public:
-  FRCNNDetector(const std::string &cfg_file);
+  FRCNNDetector(const std::string &cfg_root = ".", const std::string &cfg_file = "FRCNNDetector.yml");
 
   virtual bool Detect(const cv::Mat &img, DetectorResults &results);
 

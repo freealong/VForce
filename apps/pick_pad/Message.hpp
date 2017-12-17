@@ -6,7 +6,7 @@
 #define VFORCE_MESSAGE_HPP
 
 #include <boost/asio.hpp>
-#include "robot/pose.hpp"
+#include "robot/Pose.hpp"
 
 struct Message {
   double flag;

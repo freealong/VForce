@@ -3,39 +3,39 @@
 //
 
 #include <glog/logging.h>
-#include "vision.hpp"
-#include "detector/frcnndetector.hpp"
-#include "detector/mrcnndetector.hpp"
-#include "matcher/randomicpmatcher.hpp"
-#include "utils/pointcloudutils.hpp"
-#include "utils/timer.hpp"
+#include "Vision.hpp"
+#include "vision/detector/FRCNNDetector.hpp"
+#include "vision/detector/MRCNNDetector.hpp"
+#include "vision/matcher/RandomICPMatcher.hpp"
+#include "utils/PointCloudUtils.hpp"
+#include "utils/Timer.hpp"
 
 using namespace std;
 
 namespace VForce {
 
-Vision::Vision(std::string cfg_file, std::string cfg_root) : transformed_model_(new pcl::PointCloud<pcl::PointXYZ>) {
-  cv::FileStorage fs(cfg_root + "/" + cfg_file, cv::FileStorage::READ);
+Vision::Vision(std::string cfg_root, std::string cfg_file) : transformed_model_(new pcl::PointCloud<pcl::PointXYZ>) {
+  cv::FileStorage fs(cfg_root + "/"  + cfg_file, cv::FileStorage::READ);
   // load detector
   string detector_name;
   fs["detector_name"] >> detector_name;
-  if (detector_name == "frcnndetector") {
-    detector_ = std::shared_ptr<Detector>(new FRCNNDetector(cfg_root + "/frcnndetector.yml"));
+  if (detector_name == "FRCNNDetector") {
+    detector_ = std::shared_ptr<Detector>(new FRCNNDetector(cfg_root));
   }
-  else if (detector_name == "mrcnndetector") {
-    detector_ = std::shared_ptr<Detector>(new MRCNNDetector(cfg_root + "/mrcnndetector.yml"));
+  else if (detector_name == "MRCNNDetector") {
+    detector_ = std::shared_ptr<Detector>(new MRCNNDetector(cfg_root));
   }
   else {
-    LOG(ERROR) << "Unrecognized detector name(which should be frcnndetector or mrcnndetector): " << detector_name;
+    LOG(ERROR) << "Unrecognized detector name(which should be FRCNNDetector or MRCNNDetector): " << detector_name;
   }
   // load matcher
   string matcher_name;
   fs["matcher_name"] >> matcher_name;
-  if (matcher_name == "randomicpmatcher") {
-    matcher_ = std::shared_ptr<Matcher>(new RandomICPMatcher(cfg_root + "/randomicpmatcher.yml"));
+  if (matcher_name == "RandomICPMatcher") {
+    matcher_ = std::shared_ptr<Matcher>(new RandomICPMatcher(cfg_root));
   }
   else {
-    LOG(ERROR) << "Unrecognized matcher name(which should be randomicpmatcher): " << detector_name;
+    LOG(ERROR) << "Unrecognized matcher name(which should be RandomICPMatcher): " << detector_name;
   }
   // load params
   fs["max_match_error"] >> max_match_error_;

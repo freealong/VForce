@@ -5,7 +5,7 @@
 #ifndef VFORCE_STEREOREALSENSECAMERA_HPP
 #define VFORCE_STEREOREALSENSECAMERA_HPP
 
-#include "camera.hpp"
+#include "Camera.hpp"
 
 // Forward Declaration
 class context;
@@ -15,7 +15,7 @@ namespace VForce {
 
 class StereoRealsenseCamera : public Camera {
  public:
-  StereoRealsenseCamera(const std::string &cfg_file = "StereoRealsenseCamera.yml", const std::string &cfg_root = ".");
+  StereoRealsenseCamera(const std::string &cfg_root = ".", const std::string &cfg_file = "StereoRealsenseCamera.yml");
   virtual bool Start();
   virtual void Stop();
   virtual void Update();

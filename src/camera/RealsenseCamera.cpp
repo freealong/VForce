@@ -6,7 +6,7 @@
 using rs::context;
 using rs::device;
 
-#include "realsensecamera.hpp"
+#include "RealsenseCamera.hpp"
 #include <glog/logging.h>
 
 namespace VForce {
@@ -14,13 +14,23 @@ namespace VForce {
 using namespace std;
 using namespace cv;
 
-RealSenseCamera::RealSenseCamera(int id) : user_calibration_(false) {
+RealsenseCamera::RealsenseCamera(bool manual_calibration, const string &cfg_root, const string &cfg_file) :
+    user_calibration_(false),
+    Camera(cfg_root, cfg_file) {
   // get device
+  FileStorage fs(cfg_root_ + "/" + cfg_file_, FileStorage::READ);
+  int id;
+  fs["id"] >> id;
   context_ = std::shared_ptr<context>(new context);
   dev_ = context_->get_device(id);
+  if (manual_calibration) {
+    string calibration_cfg;
+    fs["calibration_cfg"] >> calibration_cfg;
+    LoadCalibration(calibration_cfg);
+  }
 }
 
-bool RealSenseCamera::Start() {
+bool RealsenseCamera::Start() {
   if (running_)
     return true;
   // start camera
@@ -46,7 +56,7 @@ bool RealSenseCamera::Start() {
   return true;
 }
 
-void RealSenseCamera::Stop() {
+void RealsenseCamera::Stop() {
   if (running_) {
     dev_->stop();
     if (user_calibration_ && depth_image_ != nullptr)
@@ -55,7 +65,7 @@ void RealSenseCamera::Stop() {
   }
 }
 
-void RealSenseCamera::Update() {
+void RealsenseCamera::Update() {
   if (dev_->is_streaming()) {
     dev_->wait_for_frames();
     color_image_ = (uint8_t *) dev_->get_frame_data(rs::stream::color);
@@ -71,7 +81,7 @@ void RealSenseCamera::Update() {
   }
 }
 
-void RealSenseCamera::FetchColor(cv::Mat &color) {
+void RealsenseCamera::FetchColor(cv::Mat &color) {
   // Create color image
   cv::Mat color_rgb(r_height_,
                     r_width_,
@@ -80,7 +90,7 @@ void RealSenseCamera::FetchColor(cv::Mat &color) {
   cvtColor(color_rgb, color, cv::COLOR_BGR2RGB);
 }
 
-void RealSenseCamera::FetchDepth(cv::Mat &depth) {
+void RealsenseCamera::FetchDepth(cv::Mat &depth) {
   // Create depth image
   cv::Mat depth_mm(d_height_,
                    d_width_,
@@ -89,7 +99,7 @@ void RealSenseCamera::FetchDepth(cv::Mat &depth) {
   depth_mm.convertTo(depth, CV_32F, depth_scale_);
 }
 
-void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud_ptr) {
+void RealsenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud_ptr) {
   cloud_ptr->clear();
   cloud_ptr->height = static_cast<unsigned>(d_height_);
   cloud_ptr->width = static_cast<unsigned>(d_width_);
@@ -119,7 +129,7 @@ void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud
   }
 }
 
-void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_ptr) {
+void RealsenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud_ptr) {
   cloud_ptr->clear();
   cloud_ptr->height = static_cast<unsigned>(d_height_);
   cloud_ptr->width = static_cast<unsigned>(d_width_);
@@ -153,7 +163,7 @@ void RealSenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &c
   }
 }
 
-bool RealSenseCamera::LoadCalibration(const std::string &cfg_file) {
+bool RealsenseCamera::LoadCalibration(const std::string &cfg_file) {
   cv::FileStorage fs(cfg_file, cv::FileStorage::READ);
   if (!fs.isOpened()) {
     LOG(ERROR) << "No Such Calibration file: " << cfg_file << endl;
@@ -175,7 +185,7 @@ bool RealSenseCamera::LoadCalibration(const std::string &cfg_file) {
   return true;
 }
 
-bool RealSenseCamera::SaveCalibration(const std::string &cfg_file) {
+bool RealsenseCamera::SaveCalibration(const std::string &cfg_file) {
   cv::FileStorage fs(cfg_file, cv::FileStorage::WRITE);
   if (!fs.isOpened()) {
     LOG(ERROR) << "Can't Open file: " << cfg_file << endl;
@@ -194,7 +204,7 @@ bool RealSenseCamera::SaveCalibration(const std::string &cfg_file) {
   return true;
 }
 
-void RealSenseCamera::ReadCameraParams() {
+void RealsenseCamera::ReadCameraParams() {
   // get color intrin
   auto color_intrin = dev_->get_stream_intrinsics(rs::stream::color);
   r_width_ = color_intrin.width;

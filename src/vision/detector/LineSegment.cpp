@@ -2,7 +2,7 @@
 // Created by yongqi on 17-12-7.
 //
 
-#include "linesegment.hpp"
+#include "LineSegment.hpp"
 #include <glog/logging.h>
 
 namespace VForce {

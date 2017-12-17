@@ -5,7 +5,7 @@
 #ifndef VFORCE_VIRTUALCAMERA_HPP
 #define VFORCE_VIRTUALCAMERA_HPP
 
-#include "camera.hpp"
+#include "Camera.hpp"
 
 namespace VForce {
 

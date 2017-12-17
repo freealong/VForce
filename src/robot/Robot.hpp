@@ -6,13 +6,13 @@
 #define VFORCE_ROBOT_HPP
 
 #include <Eigen/Eigen>
-#include "pose.hpp"
+#include "Pose.hpp"
 
 namespace VForce {
 
 class Robot {
  public:
-  Robot(const std::string &cfg_file);
+  Robot(const std::string &cfg_root = ".", const std::string &cfg_file = "Robot.yml");
 
   /**
    * Calculate robot catch pose

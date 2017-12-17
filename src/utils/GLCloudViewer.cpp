@@ -2,7 +2,7 @@
 // Created by yongqi on 1/4/17.
 //
 
-#include "glcloudviewer.hpp"
+#include "GLCloudViewer.hpp"
 
 namespace VForce {
 namespace Utils {

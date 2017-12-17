@@ -1,0 +1,4 @@
+%YAML:1.0
+---
+id: 0
+calibration_cfg: lcamParams.yml

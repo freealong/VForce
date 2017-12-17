@@ -12,6 +12,6 @@ tcp: {
 
 core: {
     camera_name: "StereoRealsense", # only support Realsense and StereoRealsense now
-    vision_cfg: "vision.yml",
-    robot_cfg: "robot.yml"
+    vision_cfg: "Vision.yml",
+    robot_cfg: "Robot.yml"
     }

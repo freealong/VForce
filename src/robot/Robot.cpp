@@ -2,18 +2,18 @@
 // Created by yongqi on 17-12-4.
 //
 
-#include "robot.hpp"
+#include "Robot.hpp"
 #include <glog/logging.h>
-#include "utils/cvutils.hpp"
+#include "utils/CVUtils.hpp"
 
 namespace VForce {
 
 using namespace Utils;
 
-Robot::Robot(const std::string &cfg_file) {
-  cv::FileStorage fs(cfg_file, cv::FileStorage::READ);
+Robot::Robot(const std::string &cfg_root, const std::string &cfg_file) {
+  cv::FileStorage fs(cfg_root + "/" + cfg_file, cv::FileStorage::READ);
   if (!fs.isOpened()) {
-    LOG(ERROR) << "Robot config file not found: cfg_file";
+    LOG(ERROR) << "Robot config file not found: " << cfg_root + "/" + cfg_file;
   }
   // load hand eye matrix
   std::string hand_eye_type;

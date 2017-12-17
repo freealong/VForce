@@ -2,23 +2,24 @@
 // Created by yongqi on 17-12-4.
 //
 
-#include "randomicpmatcher.hpp"
+#include "RandomICPMatcher.hpp"
 #include <glog/logging.h>
 #include <opencv2/opencv.hpp>
 #include <pcl/io/pcd_io.h>
 #include <pcl/registration/icp.h>
-#include "utils/pointcloudutils.hpp"
+#include "utils/PointCloudUtils.hpp"
 
 namespace VForce {
 
 using namespace std;
 
-RandomICPMatcher::RandomICPMatcher(const string &cfg_file) :
+RandomICPMatcher::RandomICPMatcher(const string &cfg_root, const string &cfg_file) :
+    Matcher(cfg_root, cfg_file),
     model_size_{0, 0, 0},
     uniform_radius_(0.001),
     divide_num_(1),
     sampled_model_(new PointTCloud) {
-  LoadConfig(cfg_file);
+  LoadConfig(cfg_root + "/" + cfg_file);
 }
 
 bool RandomICPMatcher::LoadConfig(const std::string &cfg_file) {

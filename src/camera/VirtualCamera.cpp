@@ -2,10 +2,10 @@
 // Created by yongqi on 17-5-22.
 //
 
-#include "virtualcamera.hpp"
+#include "VirtualCamera.hpp"
 #include <pcl/io/pcd_io.h>
 #include <glog/logging.h>
-#include <utils/cvutils.hpp>
+#include <utils/CVUtils.hpp>
 
 namespace VForce {
 

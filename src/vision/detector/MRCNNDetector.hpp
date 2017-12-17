@@ -5,14 +5,14 @@
 #ifndef VFORCE_MRCNNDETECTOR_HPP
 #define VFORCE_MRCNNDETECTOR_HPP
 
-#include "detector.hpp"
-#include "pythonconversion.hpp"
+#include "Detector.hpp"
+#include "NDArrayConverter.hpp"
 
 namespace VForce {
 
 class MRCNNDetector : public Detector {
  public:
-  MRCNNDetector(const std::string &cfg_file);
+  MRCNNDetector(const std::string &cfg_root = ".", const std::string &cfg_file = "MRCNNDetector.yml");
 
   virtual bool Detect(const cv::Mat &img, DetectorResults &results);
 

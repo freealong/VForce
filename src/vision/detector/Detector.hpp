@@ -20,6 +20,9 @@ typedef std::vector<ObjectInfo> DetectorResults;
 
 class Detector {
  public:
+  Detector(const std::string& cfg_root = ".", const std::string &cfg_file = "Detector.yml") :
+      cfg_root_(cfg_root), cfg_file_(cfg_file) {}
+
   /**
    * Detect objects in image
    * @param img input image
@@ -34,6 +37,9 @@ class Detector {
    * @return visualized image
    */
   cv::Mat VisualizeResults(const cv::Mat &img, const DetectorResults &results) const;
+
+ protected:
+  std::string cfg_root_, cfg_file_;
 };
 
 }

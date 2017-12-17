@@ -16,7 +16,8 @@ class Matcher {
   typedef typename pcl::PointCloud<PointT> PointTCloud;
   typedef typename boost::shared_ptr<PointTCloud> PointTCloudPtr;
 
-  Matcher() : init_(false), model_(new PointTCloud) {
+  Matcher(const std::string &cfg_root = ".", const std::string &cfg_file = "Matcher") :
+      cfg_root_(cfg_root), cfg_file_(cfg_file), init_(false), model_(new PointTCloud) {
   }
 
   /**
@@ -50,6 +51,7 @@ class Matcher {
 
   PointTCloudPtr model_;
   bool init_;
+  std::string cfg_root_, cfg_file_;
 };
 
 }

@@ -2,7 +2,7 @@
 // Created by yongqi on 17-12-15.
 //
 
-#include "camera.hpp"
+#include "Camera.hpp"
 
 namespace VForce {
 
