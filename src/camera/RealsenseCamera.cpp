@@ -40,6 +40,7 @@ bool RealsenseCamera::Start() {
   }
   dev_->enable_stream(rs::stream::depth, rs::preset::best_quality);
   dev_->enable_stream(rs::stream::color, rs::preset::best_quality);
+  dev_->set_option(rs::option::f200_laser_power, 1.0);
   dev_->start();
   // warm up camera
   for (int i = 0; i < 30; ++i)
