@@ -164,7 +164,7 @@ void RealsenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &c
 }
 
 bool RealsenseCamera::LoadCalibration(const std::string &cfg_file) {
-  cv::FileStorage fs(cfg_file, cv::FileStorage::READ);
+  cv::FileStorage fs(cfg_root_ + "/" + cfg_file, cv::FileStorage::READ);
   if (!fs.isOpened()) {
     LOG(ERROR) << "No Such Calibration file: " << cfg_file << endl;
     user_calibration_ = false;

@@ -14,7 +14,7 @@ namespace VForce {
 class Camera {
  public:
   Camera(const std::string& cfg_root = ".", const std::string &cfg_file = "Camera.yml") :
-      running_(false), cfg_root_("."), cfg_file_(cfg_file) {}
+      running_(false), cfg_root_(cfg_root), cfg_file_(cfg_file) {}
   virtual bool Start() = 0;
   virtual void Stop() = 0;
   /**
