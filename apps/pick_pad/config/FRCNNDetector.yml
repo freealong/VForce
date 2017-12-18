@@ -3,4 +3,4 @@
 # path include detector's .py file
 script_path: "../scripts"
 script_name: "FRCNNDetector"
-model: "../apps/pick_pad/model/frcnn.pb"
+model: "../apps/model/pad_frcnn.pb"

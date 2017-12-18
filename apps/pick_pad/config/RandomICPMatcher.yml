@@ -1,7 +1,7 @@
 %YAML:1.0
 ---
 # model file path
-model_path: "../apps/pick_pad/model/object.pcd"
+model_path: "../apps/model/pad.pcd"
 # model size
 model_size: {
     x: 0.1,
