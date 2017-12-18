@@ -6,7 +6,7 @@
 #define VFORCE_POSE_HPP
 
 #include <ostream>
-#include "utils/mathutils.hpp"
+#include "utils/MathUtils.hpp"
 
 namespace VForce {
 

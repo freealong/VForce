@@ -7,6 +7,9 @@
 
 #include <boost/asio.hpp>
 #include "robot/Pose.hpp"
+#include "utils/MathUtils.hpp"
+
+using namespace VForce;
 
 struct Message {
   double flag;
@@ -15,12 +18,12 @@ struct Message {
 
   Message(const VForce::Pose& pose, int id) {
     flag = static_cast<double>(id);
-    x = static_cast<double>(pose.x_);
-    y = static_cast<double>(pose.y_);
-    z = static_cast<double>(pose.z_);
-    roll = static_cast<double>(pose.roll_);
-    pitch = static_cast<double>(pose.pitch_);
-    yaw = static_cast<double>(pose.yaw_);
+    x = static_cast<double>(pose.x_ * 1000);
+    y = static_cast<double>(pose.y_ * 1000);
+    z = static_cast<double>(pose.z_ * 1000);
+    roll = static_cast<double>(Utils::rad2deg(pose.roll_));
+    pitch = static_cast<double>(Utils::rad2deg(pose.pitch_));
+    yaw = static_cast<double>(Utils::rad2deg(pose.yaw_));
   }
 
   friend std::ostream& operator<<(std::ostream &os, const Message &m);
