@@ -216,27 +216,20 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
           lk.unlock();
           tcp_cv.notify_all();
           gui_cv.notify_all();
-          // wait request IN2
-          while (true) {
-            if (tcp_request == RequestType::IN2) {
-              lk.lock();
-              Eigen::Matrix4f offset = Eigen::Matrix4f::Identity();
-              offset(2, 3) = 0.04;
-              robot.CalculatePose(cMo * offset, target_pose, flag);
-              tcp_request = RequestType::OUT2;
-              lk.unlock();
-              tcp_cv.notify_all();
-              break;
-            }
-            else
-              this_thread::sleep_for(chrono::milliseconds(10));
-          }
         } else if (gui_request == RequestType::IN1) {
           gui_request = RequestType::OUT1;
           lk.unlock();
           gui_cv.notify_all();
         }
       }
+    }
+    else if (tcp_request == RequestType::IN2) {
+      Eigen::Matrix4f offset = Eigen::Matrix4f::Identity();
+      offset(2, 3) = 0.04;
+      robot.CalculatePose(cMo * offset, target_pose, flag);
+      tcp_request = RequestType::OUT2;
+      lk.unlock();
+      tcp_cv.notify_all();
     }
   }
   LOG(INFO) << "Vision Thread Closed";

@@ -86,7 +86,7 @@ void StereoRealsenseCamera::Update() {
                 left_aligned_depth_, left_color_height_, left_color_width_,
                 left_color_matrix_, left_color_coeffs_,
                 left_rMd_, left_depth_scale_);
-    // align right raw depth to left color
+//     align right raw depth to left color
     Align2Other(right_raw_depth, right_depth_height_, right_depth_width_,
                 right_depth_matrix_, right_depth_coeffs_,
                 right_aligned_depth_, left_color_height_, left_color_width_,
