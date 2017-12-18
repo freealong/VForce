@@ -16,6 +16,7 @@
 #include <glog/logging.h>
 
 // User Defined
+#include "utils/CVUtils.hpp"
 #include "utils/GLCloudViewer.hpp"
 #include "utils/SyncTCPServer.hpp"
 #include "utils/PointCloudUtils.hpp"
@@ -61,26 +62,30 @@ enum class RequestType : int {
  */
 void TCPThread(string address, int port, RequestType &request, int &flag, Pose &target) {
   LOG(INFO) << "Initializing TCP thread...";
-  Utils::SyncTCPServer<char, Message> tcp_server(address, static_cast<unsigned short>(port));
-  LOG(INFO) << "Initialized TCP thread successfully";
   while (true) {
     if (g_close)
       break;
+    Utils::SyncTCPServer<char, Message> tcp_server(address, static_cast<unsigned short>(port));
+    LOG(INFO) << "Setup TCP server successfully";
     tcp_server.WaitingClient();
+    LOG(INFO) << "Client connected";
     while (true) {
       if (g_close)
         break;
       try {
         char recv_msg;
         tcp_server.RecvMsg(recv_msg);
+        LOG(INFO) << "RecvMsg: " << recv_msg;
         unique_lock<mutex> lk(mu);
         if (recv_msg == 'a')
           request = RequestType::IN1;
         tcp_cv.wait(lk, [&]{return request == RequestType::OUT1 || request == RequestType::VIP;});
-        flag = 0x0; // current client need flag to be 0
-        tcp_server.SendMsg({target, flag});
+        Message send_msg(target, 0x00); // client need flag = 0
+        LOG(INFO) << "SendMsg: " << send_msg;
+        tcp_server.SendMsg(send_msg);
       }
       catch (std::exception& e){
+        LOG(INFO) << "Client disconnected";
         break;
       }
     }
@@ -194,6 +199,7 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
       }
       if (vision.Process(color, depth, cloud)) {
         cMo = vision.GetObjectTransfomation();
+        LOG(INFO) << "cMo:\n" << cMo.format(Utils::IOF);
         target_cloud = vision.GetTransformedModel();
         robot.CalculatePose(cMo, target_pose, flag);
         if (tcp_request == RequestType::IN1) {

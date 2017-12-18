@@ -26,8 +26,8 @@ struct Pose {
   friend std::ostream& operator<<(std::ostream &os, const Pose &p) {
     os << "x: " << p.x_ * 1000. << "mm y: " << p.y_ * 1000. << "mm z: " << p.z_ * 1000.
        << "mm roll: " << Utils::rad2deg(p.roll_)
-       << "mm pitch: " << Utils::rad2deg(p.pitch_)
-       << "mm yaw: " << Utils::rad2deg(p.yaw_);
+       << "° pitch: " << Utils::rad2deg(p.pitch_)
+       << "° yaw: " << Utils::rad2deg(p.yaw_) << "°";
   }
 };
 
