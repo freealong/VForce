@@ -18,7 +18,7 @@ VirtualCamera::VirtualCamera(std::string p, std::string type) :
 }
 
 bool VirtualCamera::Start() {
-  return LoadCalibration(_path + "/camParam.yml");
+  return LoadCalibration(_path + "/camParams.yml");
 }
 
 void VirtualCamera::Stop() {
@@ -58,7 +58,7 @@ void VirtualCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &clo
 bool VirtualCamera::LoadCalibration(const std::string &cfg_file) {
   cv::FileStorage fs(cfg_file, cv::FileStorage::READ);
   if (!fs.isOpened()) {
-    LOG(ERROR) << "Can't Open file: " << cfg_file << endl;
+    LOG(WARNING) << "Can't Open file: " << cfg_file << endl;
     return false;
   }
   fs["r_intrin"] >> _r_intrin;

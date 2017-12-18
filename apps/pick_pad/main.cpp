@@ -60,10 +60,13 @@ enum class RequestType : int {
  * @param target target will send to client
  */
 void TCPThread(string address, int port, RequestType &request, int &flag, Pose &target) {
+  LOG(INFO) << "Initializing TCP thread...";
+  Utils::SyncTCPServer<char, Message> tcp_server(address, static_cast<unsigned short>(port));
+  LOG(INFO) << "Initialized TCP thread successfully";
   while (true) {
     if (g_close)
       break;
-    Utils::SyncTCPServer<char, Message> tcp_server(address, static_cast<unsigned short>(port));
+    tcp_server.WaitingClient();
     while (true) {
       if (g_close)
         break;
@@ -98,12 +101,15 @@ void GUIThread(int width, int height, string name, RequestType &request,
                PointCloud<PointType>::Ptr &cloud,
                PointCloud<PointXYZ>::Ptr &target_cloud,
                Eigen::Matrix4f &cMo) {
+  LOG(INFO) << "Initializing GUI thread...";
   Utils::GLCloudViewer viewer(width, height, name);
   viewer.InitWindow();
 //  vector<PointXYZ> origin_box = ();
 //  vector<PointXYZ> target_box(origin_box);
   vector<PointXYZ> origin_axis{{0, 0, 0}, {0.1, 0, 0}, {0, 0.1, 0}, {0, 0, 0.1}};
   vector<PointXYZ> target_axis(origin_axis);
+
+  LOG(INFO) << "Initialized GUI thread successfully";
   while (viewer.NotStop()) {
     if (g_close) {
       break;
@@ -149,6 +155,7 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
                   RequestType &gui_request, PointCloud<PointType>::Ptr &cloud,
                   PointCloud<PointXYZ>::Ptr &target_cloud,
                   Eigen::Matrix4f &cMo) {
+  LOG(INFO) << "Initializing vision thread...";
   shared_ptr<Camera> camera;
   if (FLAGS_virtual_camera)
     camera = shared_ptr<Camera>(new VirtualCamera(FLAGS_virtual_camera_path));
@@ -170,6 +177,7 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
   Vision vision(FLAGS_config_root, vision_cfg);
   Robot robot(FLAGS_config_root, robot_cfg);
 
+  LOG(INFO) << "Vision thread initialized successfully";
   while (true) {
     if (g_close)
       break;
@@ -202,7 +210,7 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
       }
     }
   }
-  LOG(INFO) << "Vision Thread Closed";
+  LOG(INFO) << "Vision thread Closed";
 }
 
 
@@ -212,8 +220,11 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
 
 int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+  google::InitGoogleLogging(argv[0]);
+  google::LogToStderr();
 
   // read conifg
+  LOG(INFO) << "Load config from " << FLAGS_config_root + "/main.yml";
   cv::FileStorage fs(FLAGS_config_root + "/main.yml", cv::FileStorage::READ);
   int width, height;
   fs["gui"]["width"] >> width;
@@ -226,8 +237,6 @@ int main(int argc, char **argv) {
   fs["core"]["camera_name"] >> camera_name;
   fs["core"]["vision_cfg"] >> vision_cfg;
   fs["core"]["robot_cfg"] >> robot_cfg;
-
-  LOG(INFO) << "begin to init..." << endl;
 
   // share variable between TCPThread and VisionThread
   RequestType tcp_request = RequestType::NONE;
@@ -244,13 +253,15 @@ int main(int argc, char **argv) {
                                               std::ref(gui_request), std::ref(cloud), std::ref(target_cloud),
                                               std::ref(cMo)));
   shared_ptr<thread> gui_thread, tcp_thread;
-  if (FLAGS_gui)
+  if (FLAGS_gui) {
     gui_thread = shared_ptr<thread>(new thread(GUIThread, width, height, argv[0], std::ref(gui_request),
                                                std::ref(cloud), std::ref(target_cloud), std::ref(cMo)));
+  }
 
-  if (FLAGS_tcp)
+  if (FLAGS_tcp) {
     tcp_thread = shared_ptr<thread>(new thread(TCPThread, server_address, server_port,
                                                std::ref(tcp_request), std::ref(flag), std::ref(target_pose)));
+  }
 
   if (FLAGS_gui)
     gui_thread->detach();

@@ -45,6 +45,7 @@ Vision::Vision(std::string cfg_root, std::string cfg_file) : transformed_model_(
 bool Vision::Process(const cv::Mat &color,
                      const cv::Mat &depth,
                      const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud) {
+  LOG(INFO) << "\nProcessing...";
   // run detect
   Utils::Timer<std::chrono::milliseconds> timer;
   // @TODO: convert rgb in numpy array
