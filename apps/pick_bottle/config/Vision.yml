@@ -1,0 +1,9 @@
+%YAML:1.0
+---
+# currently detector only support FRCNN and MRCNN
+detector_name: "FRCNNDetector"
+
+# currently matcher only support RandomICP
+matcher_name: "RandomICPMatcher"
+
+max_match_error: 4e-5
