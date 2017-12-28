@@ -60,6 +60,8 @@ void Camera::Align2Other(uint16_t *depth,
     }
   }
 }
+
+// @FIXME: There is something wrong with distortion, distortion should based on camera distortion model
 void Camera::Deproject(float *pixel,
                        float depth,
                        const cv::Mat &intrin,
@@ -87,8 +89,8 @@ void Camera::Project(float *point, const cv::Mat &intrin, const cv::Mat &coeffs,
     double f = 1 + coeffs.at<double>(0) * r2 + coeffs.at<double>(1) * r2 * r2 + coeffs.at<double>(4) * r2 * r2 * r2;
     x *= f;
     y *= f;
-    double dx = x * f + 2 * coeffs.at<double>(2) * x * y + coeffs.at<double>(3) * (r2 + 2 * x * x);
-    double dy = y * f + 2 * coeffs.at<double>(3) * x * y + coeffs.at<double>(2) * (r2 + 2 * y * y);
+    double dx = x + 2 * coeffs.at<double>(2) * x * y + coeffs.at<double>(3) * (r2 + 2 * x * x);
+    double dy = y + 2 * coeffs.at<double>(3) * x * y + coeffs.at<double>(2) * (r2 + 2 * y * y);
     x = dx;
     y = dy;
   }
