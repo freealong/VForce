@@ -8,6 +8,7 @@ using rs::device;
 
 #include "StereoRealsenseCamera.hpp"
 #include <glog/logging.h>
+#include "3rdparty/libelas/elas.h"
 
 namespace VForce {
 
@@ -23,6 +24,7 @@ StereoRealsenseCamera::StereoRealsenseCamera(const std::string &cfg_root, const 
   left_dev_ = context_->get_device(0);
   right_dev_ = context_->get_device(1);
   LoadCalibration(cfg_file_);
+  elas_ = std::shared_ptr<Elas>(new Elas(Elas::parameters()));
 }
 
 bool StereoRealsenseCamera::Start() {
@@ -43,11 +45,18 @@ bool StereoRealsenseCamera::Start() {
     left_dev_->wait_for_frames();
     right_dev_->wait_for_frames();
   }
-  depth_ = new float[left_color_width_ * left_color_height_];
-  left_aligned_depth_ = new uint16_t[left_color_width_ * left_color_height_];
-  right_aligned_depth_ = new uint16_t[left_color_width_ * left_color_height_];
+  int color_size = left_color_height_ * left_color_width_;
+  depth_ = new float[color_size];
+  left_aligned_depth_ = new uint16_t[color_size];
+  right_aligned_depth_ = new uint16_t[color_size];
   left_depth_scale_ = left_dev_->get_depth_scale();
   right_depth_scale_ = right_dev_->get_depth_scale();
+  // stereo
+  left_gray_ = new uint8_t[color_size];
+  right_gray_ = new uint8_t[color_size];
+  left_disparity_ = new float[color_size];
+  right_disparity_ = new float[color_size];
+  stereo_depth_ = new float[color_size];
   running_ = true;
   return true;
 }
@@ -86,13 +95,21 @@ void StereoRealsenseCamera::Update() {
                 left_aligned_depth_, left_color_height_, left_color_width_,
                 left_color_matrix_, left_color_coeffs_,
                 left_rMd_, left_depth_scale_);
-//     align right raw depth to left color
+    // align right raw depth to left color
     Align2Other(right_raw_depth, right_depth_height_, right_depth_width_,
                 right_depth_matrix_, right_depth_coeffs_,
                 right_aligned_depth_, left_color_height_, left_color_width_,
                 left_color_matrix_, left_color_coeffs_,
                 lMr_ * right_rMd_, right_depth_scale_);
-    FuseDepth(left_aligned_depth_, right_aligned_depth_, depth_);
+    // convert rgb to gray
+    RGB2Gray(left_color_, left_gray_, left_color_width_, left_color_height_);
+    RGB2Gray(right_color_, right_gray_, right_color_width_, right_color_height_);
+    // get stereo depth map
+    const int dims[] = {left_color_width_, left_color_height_, left_color_width_};
+    elas_->process(left_gray_, right_gray_, left_disparity_, right_disparity_, dims);
+    Reproject(left_disparity_, left_color_width_, left_color_height_, Q_, stereo_depth_);
+    // fuse depth maps
+    FuseDepth(left_aligned_depth_, right_aligned_depth_, stereo_depth_, depth_);
   }
   else {
     LOG(ERROR) << "start the camera first !!!";
@@ -228,6 +245,7 @@ bool StereoRealsenseCamera::LoadCalibration(const std::string &cfg_file) {
   right_camera["dMr"] >> right_rMd_;
   right_rMd_ = right_rMd_.inv();
   stereo["lMr"] >> lMr_;
+  stereo["Q"] >> Q_;
   fs.release();
   return true;
 }
@@ -237,22 +255,31 @@ bool StereoRealsenseCamera::SaveCalibration(const std::string &cfg_file) {
   return true;
 }
 
-void StereoRealsenseCamera::FuseDepth(uint16_t *depth1, uint16_t *depth2, float *depth_fused) {
+void StereoRealsenseCamera::FuseDepth(uint16_t *depth1, uint16_t *depth2, float *depth3, float *depth_fused) {
   int size = left_color_width_ * left_color_height_;
 #pragma omp parallel for schedule(dynamic)
+  // @TODO: deal with the situation if the extremum of depths is too big
   for (int i = 0; i < size; ++i) {
     float d1 = depth1[i] * left_depth_scale_;
     float d2 = depth2[i] * right_depth_scale_;
-    if (depth1[i] == 0)
-      depth_fused[i] = d2;
-    else if (depth2[i] != 0) { // both depth1 and depth2 are valid
-      if (fabs(d1 - d2) > 0.05)
-        depth_fused[i] = 0;
-      else
-        depth_fused[i] = 0.5f * depth1[i] * left_depth_scale_ +  0.5f * depth2[i] * right_depth_scale_;
-    }
-    else
-      depth_fused[i] = d1;
+    float d3 = depth3[i] * 0.001f;
+    float w1 = 1.f, w2 = 1.f, w3 = 0.2f;
+    if (d1 == 0)
+      w1 = 0.f;
+    if (d2 == 0)
+      w2 = 0.f;
+    if (d3 == 0)
+      w3 = 0.f;
+    float w = w1 + w2 + w3;
+    depth_fused[i] = w == 0 ? 0 : (w1 * d1 + w2 * d2 + w3 * d3) / w;
+  }
+}
+
+void StereoRealsenseCamera::RGB2Gray(uint8_t *rgb, uint8_t *gray, int w, int h) {
+  int size = w * h;
+#pragma omp parallel for schedule(dynamic)
+  for (int i = 0; i < size; ++i) {
+    gray[i] = rgb[3*i];
   }
 }
 

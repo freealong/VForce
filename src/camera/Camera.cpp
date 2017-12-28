@@ -107,4 +107,17 @@ void Camera::Transform(float *point1, const cv::Mat &extrin, float *point2) cons
       extrin.at<double>(2, 2) * point1[2] + extrin.at<double>(2, 3));
 }
 
+void Camera::Reproject(const float *disparity, const int w, const int h, const cv::Mat &Q, float *depth) {
+#pragma omp parallel for schedule(dynamic)
+  for (int y = 0; y < h; ++y)
+    for (int x = 0; x < w; ++x) {
+      int id = y * w + x;
+//      double X = x + Q.at<double>(0, 3);
+//      double Y = y + Q.at<double>(1, 3);
+      double Z = Q.at<double>(2, 3);
+      double W = Q.at<double>(3, 2) * disparity[id] + Q.at<double>(3, 3);
+      depth[id] = static_cast<float>(Z / W);
+    }
+}
+
 }

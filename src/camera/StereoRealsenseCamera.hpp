@@ -10,6 +10,7 @@
 // Forward Declaration
 class context;
 class device;
+class Elas;
 
 namespace VForce {
 
@@ -28,12 +29,22 @@ class StereoRealsenseCamera : public Camera {
 
  private:
   /**
-   * Fuse two depth map into one
+   * Fuse three depth maps into one
    * @param depth1
    * @param depth2
+   * @param depth3 depth map from stereo
    * @param depth_fused
    */
-  void FuseDepth(uint16_t *depth1, uint16_t *depth2, float *depth_fused);
+  void FuseDepth(uint16_t *depth1, uint16_t *depth2, float *depth3, float *depth_fused);
+
+  /**
+   * Convert rgb image to gray
+   * @param rgb
+   * @param gray
+   * @param w
+   * @param h
+   */
+  void RGB2Gray(uint8_t *rgb, uint8_t *gray, int w, int h);
 
   std::shared_ptr<context> context_;
   device *left_dev_, *right_dev_;
@@ -52,6 +63,12 @@ class StereoRealsenseCamera : public Camera {
   cv::Mat left_depth_coeffs_, right_depth_coeffs_;
   cv::Mat left_rMd_, right_rMd_; // color to depth transformation
   cv::Mat lMr_; // left color to right color transformation
+  // stereo
+  std::shared_ptr<Elas> elas_;
+  uint8_t *left_gray_, *right_gray_;
+  float *left_disparity_, *right_disparity_;
+  float *stereo_depth_;
+  cv::Mat Q_;
 };
 
 }

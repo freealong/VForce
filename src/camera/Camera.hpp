@@ -75,6 +75,16 @@ class Camera {
    */
   void Transform(float point1[3], const cv::Mat &extrin, float point2[3]) const;
 
+  /**
+   * Reproject disparity to depth
+   * @param disparity disparity map
+   * @param w disparity map width
+   * @param h disparity map height
+   * @param Q Stereo Reprojection Matrix
+   * @param depth Output depth map, should already allocated with size w*h
+   */
+  void Reproject(const float *disparity, const int w, const int h, const cv::Mat &Q, float *depth);
+
   bool running_;
   std::string cfg_root_, cfg_file_;
 };

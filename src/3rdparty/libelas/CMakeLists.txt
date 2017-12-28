@@ -17,7 +17,7 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     endif()
 endif()
 
-if (OPENMP_NOT_FOUND)
+if (NOT OPENMP_FOUND)
     message(FATAL_ERROR "OpenMP not found. This is an OpenMP version library")
 endif()
 

@@ -8,4 +8,4 @@ file(GLOB_RECURSE camera_HEADERS ${camera_ROOT}/*.hpp ${camera_ROOT}/*.h)
 file(GLOB_RECURSE camera_SOURCES ${camera_ROOT}/*.cpp)
 
 add_library(vforce_camera ${camera_SOURCES} ${camera_HEADERS})
-target_link_libraries(vforce_camera glog vforce_utils ${librealsense_LIBRARIES} ${OpenCV_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(vforce_camera glog vforce_utils elas ${librealsense_LIBRARIES} ${OpenCV_LIBRARIES} ${PCL_LIBRARIES})
