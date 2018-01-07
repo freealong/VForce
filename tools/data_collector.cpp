@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
   cout << "initialize PointCloudHandler successfully" << endl;
 
   // using camera variables
-//  shared_ptr<Camera> camera(new RealsenseCamera(true, "../config"));
-  shared_ptr<Camera> camera(new StereoRealsenseCamera("../config"));
+  shared_ptr<Camera> camera(new RealsenseCamera(true, "../config"));
+//  shared_ptr<Camera> camera(new StereoRealsenseCamera("../config"));
   cv::Mat color, depth;
   camera->Start();
   cout << "load camera successfully..." << endl;

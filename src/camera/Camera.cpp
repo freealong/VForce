@@ -49,12 +49,16 @@ void Camera::Align2Other(uint16_t *depth,
         const int other_x1 = static_cast<int>(other_pixel[0] + 0.5f);
         const int other_y1 = static_cast<int>(other_pixel[1] + 0.5f);
 
-        if (other_x0 < 0 || other_y0 < 0 || other_x1 >= o_width || other_y1 >= o_height)
+        int y_beg = other_y0 < other_y1 ? other_y0 : other_y1;
+        int y_end = other_y0 < other_y1 ? other_y1 : other_y0;
+        int x_beg = other_x0 < other_x1 ? other_x0 : other_x1;
+        int x_end = other_x0 < other_x1 ? other_x1 : other_x0;
+        if (x_beg < 0 || y_beg < 0 || x_end >= o_width || y_end >= o_height)
           continue;
 
         // Transfer between the depth pixels and the pixels inside the rectangle on the other image
-        for (int y = std::min(other_y0, other_y1); y <= std::max(other_y1, other_y0); ++y)
-          for (int x = std::min(other_x0, other_x1); x <= std::max(other_x1, other_x0); ++x)
+        for (int y = y_beg; y < y_end; ++y)
+          for (int x = x_beg; x < x_end; ++x)
             other[y * o_width + x] = depth[dxy];
       }
     }

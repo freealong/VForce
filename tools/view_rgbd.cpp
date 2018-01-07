@@ -22,6 +22,7 @@ using namespace VForce;
 /////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
   shared_ptr<Camera> camera(new RealsenseCamera(true, "../config"));
+//  shared_ptr<Camera> camera(new StereoRealsenseCamera("../config"));
   camera->Start();
 
   cv::namedWindow("Depth Frame", 1);
@@ -38,9 +39,7 @@ int main(int argc, char *argv[]) {
 
     imshow("Depth Frame", depth);
     imshow("RGB Frame", color);
-    char key = cv::waitKey(10);
-    if (key > 0)
-      cout << "pressed key: " << key << endl;
+    int key = cv::waitKey(10);
     if (key == 27) // key == esc
       break;
     else if (key == 115) {

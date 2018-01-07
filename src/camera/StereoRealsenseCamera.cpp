@@ -35,10 +35,10 @@ bool StereoRealsenseCamera::Start() {
     return false;
   }
   left_dev_->enable_stream(rs::stream::depth, rs::preset::best_quality);
-  left_dev_->enable_stream(rs::stream::color, rs::preset::best_quality);
+  left_dev_->enable_stream(rs::stream::color, 640, 480, rs::format::bgr8, 30);
   left_dev_->start();
   right_dev_->enable_stream(rs::stream::depth, rs::preset::best_quality);
-  right_dev_->enable_stream(rs::stream::color, rs::preset::best_quality);
+  right_dev_->enable_stream(rs::stream::color, 640, 480, rs::format::bgr8, 30);
   right_dev_->start();
   // warm up camera
   for (int i = 0; i < 30; ++i) {
@@ -52,13 +52,8 @@ bool StereoRealsenseCamera::Start() {
   left_depth_scale_ = left_dev_->get_depth_scale();
   right_depth_scale_ = right_dev_->get_depth_scale();
   // stereo
-  left_gray_ = new uint8_t[color_size];
-  right_gray_ = new uint8_t[color_size];
-  left_disparity_ = new float[color_size];
-  right_disparity_ = new float[color_size];
   stereo_depth_ = new float[color_size];
-  running_ = true;
-  return true;
+  return (running_ = true);
 }
 
 void StereoRealsenseCamera::Stop() {
@@ -68,6 +63,7 @@ void StereoRealsenseCamera::Stop() {
     delete[] depth_;
     delete[] left_aligned_depth_;
     delete[] right_aligned_depth_;
+    delete[] stereo_depth_;
     running_ = false;
   }
 }
@@ -89,6 +85,7 @@ void StereoRealsenseCamera::Update() {
     for (int i = 0; i < 5; ++i)
       right_dev_->wait_for_frames();
     uint16_t *right_raw_depth = (uint16_t  *)right_dev_->get_frame_data(rs::stream::depth);
+    right_color_ = (uint8_t *)right_dev_->get_frame_data(rs::stream::color);
     // align left raw depth to left color
     Align2Other(left_raw_depth, left_depth_height_, left_depth_width_,
                 left_depth_matrix_, left_depth_coeffs_,
@@ -101,13 +98,8 @@ void StereoRealsenseCamera::Update() {
                 right_aligned_depth_, left_color_height_, left_color_width_,
                 left_color_matrix_, left_color_coeffs_,
                 lMr_ * right_rMd_, right_depth_scale_);
-    // convert rgb to gray
-    RGB2Gray(left_color_, left_gray_, left_color_width_, left_color_height_);
-    RGB2Gray(right_color_, right_gray_, right_color_width_, right_color_height_);
-    // get stereo depth map
-    const int dims[] = {left_color_width_, left_color_height_, left_color_width_};
-    elas_->process(left_gray_, right_gray_, left_disparity_, right_disparity_, dims);
-    Reproject(left_disparity_, left_color_width_, left_color_height_, Q_, stereo_depth_);
+    // get stereo depth
+    StereoDepth(left_color_, right_color_, stereo_depth_);
     // fuse depth maps
     FuseDepth(left_aligned_depth_, right_aligned_depth_, stereo_depth_, depth_);
   }
@@ -122,7 +114,8 @@ void StereoRealsenseCamera::FetchColor(cv::Mat &color) {
                     left_color_width_,
                     CV_8UC3,
                     (uchar *) left_color_);
-  cvtColor(color_rgb, color, cv::COLOR_BGR2RGB);
+//  cvtColor(color_rgb, color, cv::COLOR_BGR2RGB);
+  color = color_rgb.clone();
 }
 
 void StereoRealsenseCamera::FetchDepth(cv::Mat &depth) {
@@ -187,9 +180,9 @@ void StereoRealsenseCamera::FetchPointCloud(pcl::PointCloud<pcl::PointXYZRGBA>::
         p.x = point[0];
         p.y = point[1];
         p.z = point[2];
-        p.r = *(left_color_ + (dy * left_color_width_ + dx) * 3);
+        p.r = *(left_color_ + (dy * left_color_width_ + dx) * 3 + 2);
         p.g = *(left_color_ + (dy * left_color_width_ + dx) * 3 + 1);
-        p.b = *(left_color_ + (dy * left_color_width_ + dx) * 3 + 2);
+        p.b = *(left_color_ + (dy * left_color_width_ + dx) * 3);
       }
       cloud_ptr->points[dy * cloud_ptr->width + dx] = p;
     }
@@ -245,7 +238,19 @@ bool StereoRealsenseCamera::LoadCalibration(const std::string &cfg_file) {
   right_camera["dMr"] >> right_rMd_;
   right_rMd_ = right_rMd_.inv();
   stereo["lMr"] >> lMr_;
+  stereo["R"] >> R_;
+  stereo["T"] >> T_;
+  stereo["R1"] >> R1_;
+  stereo["P1"] >> P1_;
+  stereo["R2"] >> R2_;
+  stereo["P2"] >> P2_;
   stereo["Q"] >> Q_;
+  cv::Size image_size(left_color_width_, left_color_height_);
+  cv::initUndistortRectifyMap(left_color_matrix_, left_color_coeffs_, R1_, P1_, image_size, CV_16SC2, map11_, map12_);
+  cv::Mat rotated_right_color_matrix = right_color_matrix_;
+  rotated_right_color_matrix.at<double>(0, 2) = right_color_width_ - right_color_matrix_.at<double>(0, 2);
+  rotated_right_color_matrix.at<double>(1, 2) = right_color_height_ - right_color_matrix_.at<double>(1, 2);
+  cv::initUndistortRectifyMap(rotated_right_color_matrix, right_color_coeffs_, R2_, P2_, image_size, CV_16SC2, map21_, map22_);
   fs.release();
   return true;
 }
@@ -262,8 +267,9 @@ void StereoRealsenseCamera::FuseDepth(uint16_t *depth1, uint16_t *depth2, float 
   for (int i = 0; i < size; ++i) {
     float d1 = depth1[i] * left_depth_scale_;
     float d2 = depth2[i] * right_depth_scale_;
-    float d3 = depth3[i] * 0.001f;
-    float w1 = 1.f, w2 = 1.f, w3 = 0.2f;
+    float d3 = depth3[i];
+    // @TODO: stereo depth is too bad, not used here.
+    float w1 = 5.f, w2 = 5.f, w3 = 0.f;
     if (d1 == 0)
       w1 = 0.f;
     if (d2 == 0)
@@ -275,12 +281,29 @@ void StereoRealsenseCamera::FuseDepth(uint16_t *depth1, uint16_t *depth2, float 
   }
 }
 
-void StereoRealsenseCamera::RGB2Gray(uint8_t *rgb, uint8_t *gray, int w, int h) {
-  int size = w * h;
-#pragma omp parallel for schedule(dynamic)
-  for (int i = 0; i < size; ++i) {
-    gray[i] = rgb[3*i];
-  }
+void StereoRealsenseCamera::StereoDepth(uint8_t *lrgb, uint8_t *rrgb, float *depth) {
+  assert(left_color_width_ = right_color_width_);
+  assert(left_color_height_ = right_color_height_);
+  int h = left_color_height_, w = left_color_width_;
+  cv::Mat left(h, w, CV_8UC3, lrgb);
+  cv::Mat right(h, w, CV_8UC3, rrgb);
+  cv::Mat left_gray, right_gray;
+  cv::cvtColor(left, left_gray, CV_RGB2GRAY);
+  cv::cvtColor(right, right_gray, CV_RGB2GRAY);
+  cv::rotate(right_gray, right_gray, cv::ROTATE_180);
+  // rectify images
+  cv::Mat left_rectified, right_rectified;
+  cv::remap(left_gray, left_rectified, map11_, map12_, cv::INTER_LINEAR);
+  cv::remap(right_gray, right_rectified, map21_, map22_, cv::INTER_LINEAR);
+  // rotate rectified images to actually left and right image
+  cv::Mat I1, I2;
+  cv::rotate(left_rectified, I1, cv::ROTATE_90_COUNTERCLOCKWISE);
+  cv::rotate(right_rectified, I2, cv::ROTATE_90_COUNTERCLOCKWISE);
+  cv::Mat D1(w, h, CV_32FC1), D2(w, h, CV_32FC1);
+  int dims[3] = {h, w, h};
+  elas_->process(I1.data, I2.data, (float *)D1.data, (float *)D2.data, dims);
+  cv::rotate(D1, D1, cv::ROTATE_90_CLOCKWISE);
+  Reproject((float *)D1.data, w, h, Q_, depth);
 }
 
 }

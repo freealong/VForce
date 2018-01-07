@@ -38,13 +38,12 @@ class StereoRealsenseCamera : public Camera {
   void FuseDepth(uint16_t *depth1, uint16_t *depth2, float *depth3, float *depth_fused);
 
   /**
-   * Convert rgb image to gray
-   * @param rgb
-   * @param gray
-   * @param w
-   * @param h
+   * Get stereo depth from left and right color images
+   * @param lrgb
+   * @param rrgb
+   * @param depth
    */
-  void RGB2Gray(uint8_t *rgb, uint8_t *gray, int w, int h);
+  void StereoDepth(uint8_t *lrgb, uint8_t *rrgb, float *depth);
 
   std::shared_ptr<context> context_;
   device *left_dev_, *right_dev_;
@@ -65,10 +64,11 @@ class StereoRealsenseCamera : public Camera {
   cv::Mat lMr_; // left color to right color transformation
   // stereo
   std::shared_ptr<Elas> elas_;
-  uint8_t *left_gray_, *right_gray_;
-  float *left_disparity_, *right_disparity_;
   float *stereo_depth_;
+  cv::Mat R_, T_;
+  cv::Mat R1_, R2_, P1_, P2_;
   cv::Mat Q_;
+  cv::Mat map11_, map12_, map21_, map22_;
 };
 
 }
