@@ -2,3 +2,5 @@
 build/
 .ipynb_checkpoints
 *.pyc
+*.h5
+*.pb

@@ -23,3 +23,6 @@ target_link_libraries(tcpclient)
 
 add_executable(get_camera_params ${CMAKE_CURRENT_SOURCE_DIR}/get_camera_params.cpp)
 target_link_libraries(get_camera_params vforce_camera)
+
+add_executable(cloud2hha ${CMAKE_CURRENT_SOURCE_DIR}/cloud2hha.cpp)
+target_link_libraries(cloud2hha vforce_camera)

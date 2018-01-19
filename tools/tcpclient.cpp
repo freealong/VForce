@@ -57,22 +57,22 @@ int main(int argc, char **argv) {
   while (true) {
     cin >> msg;
     if (msg == "a") {
-      write(sockfd, msg.data(), 1);
+      auto size = write(sockfd, msg.data(), 1);
       char buffer[256];
       printf("get target Pose(x, y, z, R, P, Y):\n");
       double flag;
-      read(sockfd, &flag, sizeof(flag));
+      size = read(sockfd, &flag, sizeof(flag));
       for (int i = 0; i < 6; ++i) {
         double x;
-        read(sockfd, &x, sizeof(x));
+        size = read(sockfd, &x, sizeof(x));
         printf("%f ", x);
       }
       printf("\n");
     } else if (msg == "b") {
-      write(sockfd, msg.data(), 1);
+      auto size = write(sockfd, msg.data(), 1);
       char buffer[256];
       printf("get refine Pose(x, y, z, R, P, Y):\n");
-      read(sockfd, buffer, 41);
+      size = read(sockfd, buffer, 41);
       buffer[41] = 0;
       printf("%s\n", buffer);
     } else if (msg == "q")
