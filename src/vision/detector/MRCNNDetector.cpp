@@ -70,6 +70,7 @@ bool MRCNNDetector::Detect(const cv::Mat &img, DetectorResults &results) {
       // get class_id
       PyObject *class_id = PyList_GetItem(res, 2);
       object.id_ = static_cast<int>(PyLong_AsLong(class_id));
+      object.valid_pose_ = false;
       results.emplace_back(object);
     }
   }

@@ -14,19 +14,17 @@ class Vision {
  public:
   Vision(std::string cfg_root = ".", std::string cfg_file = "Vision.yml");
 
+  bool Init();
+
   bool Process(const cv::Mat &color, const cv::Mat &depth,
                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud);
 
-  Eigen::Matrix4f GetObjectTransfomation() const {
-    return cMo_;
+  const std::vector<ObjectInfo> & GetVisionResults() const {
+    return results_;
   }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr GetTransformedModel() const {
-    return transformed_model_;
-  }
-
-  ObjectInfo GetObjectInfo() const {
-    return object_;
+  const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> GetTransformedModels() const {
+    return transformed_models_;
   }
 
  private:
@@ -38,14 +36,23 @@ class Vision {
         object(o), target(t), mean_z(z) {}
   };
 
+  struct Model {
+    std::string name;
+    std::string path;
+    float size[3];
+    pcl::PointCloud<pcl::PointXYZ>::Ptr model;
+  };
+
   std::shared_ptr<Detector> detector_;
   std::shared_ptr<Matcher> matcher_;
 
-  Eigen::Matrix4f cMo_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_model_;
-  ObjectInfo object_;
+  bool estimate_all_;
+  std::map<int, Model> models_;
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> transformed_models_;
+  std::vector<ObjectInfo> results_;
 
   double max_match_error_;
+  float model_uniform_radius_;
 };
 
 }

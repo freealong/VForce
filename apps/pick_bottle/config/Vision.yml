@@ -6,4 +6,23 @@ detector_name: "FRCNNDetector"
 # currently matcher only support RandomICP
 matcher_name: "RandomICPMatcher"
 
+# target's matching error > this value will be filtered
 max_match_error: 4e-5
+
+# target's model uniform sampling radius
+model_uniform_radius: 0.006
+
+# estimate poses of all targets
+estimate_all: 0
+
+# targets to be detect
+targets: [{
+    id: 1,
+    name: "bottle",
+    path: "../apps/model/bottle_cut.pcd",
+    size: {
+        x: 0.0387,
+        y: 0.1160,
+        z: 0.0383
+        }
+    }]

@@ -70,7 +70,7 @@ bool FRCNNDetector::Detect(const cv::Mat &img, DetectorResults &reslults) {
       rect.height = ymax - ymin;
       assert(rect.x >= 0 && rect.y >= 0 && rect.x + rect.width < img.cols && rect.y + rect.height < img.rows);
       // @TODO: class id are not available
-      object.valid_mask_ = false;
+      object.valid_mask_ = object.valid_pose_ = false;
       object.id_ = 1;
       reslults.emplace_back(object);
     }

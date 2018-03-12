@@ -1,14 +1,6 @@
 %YAML:1.0
 ---
-# model file path
-model_path: "../apps/model/pad.pcd"
-# model size
-model_size: {
-    x: 0.1,
-    y: 0.05,
-    z: 0.015
-    }
-# uniform sampling radius
+# uniform sampling radius for detected object's point cloud
 uniform_radius: 0.006
 # icp guess with yaw = {2pi/divide_num, 2*2pi/divide_num, ..., 2pi}
 divide_num: 12

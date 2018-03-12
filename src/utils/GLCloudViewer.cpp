@@ -54,31 +54,19 @@ void GLCloudViewer::ProcessEvents() {
   }
 }
 
-void GLCloudViewer::ShowCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, int color) {
+void GLCloudViewer::ShowCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, unsigned char* color) {
   if (cloud == nullptr || cloud->empty())
     return;
   glPointSize(2);
   glEnable(GL_DEPTH_TEST);
   glBegin(GL_POINTS);
   for (auto p : *cloud) {
-    if (std::isnan(p.z)) continue;
-    char r = (p.z - 0.4) * 255;
-    switch (color) {
-      case 0:glColor3ub(r, r, r);
-        break;
-      case 1:glColor3ub(255, 0, 0);
-        break;
-      case 2:glColor3ub(0, 255, 0);
-        break;
-      case 3:glColor3ub(0, 0, 255);
-        break;
-      default:glColor3ub(100, 100, 100);
-        break;
-    }
+    glColor3ub(color[0], color[1], color[2]);
     glVertex3f(p.x, p.y, p.z);
   }
   glEnd();
 }
+
 void GLCloudViewer::ShowCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, int color) {
   if (cloud == nullptr || cloud->empty())
     return;

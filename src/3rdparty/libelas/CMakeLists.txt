@@ -25,6 +25,7 @@ set(ELAS_SOURCES descriptor.cpp elas.cpp filter.cpp matrix.cpp triangle.cpp)
 set(ELAS_HEADERS descriptor.h elas.h filter.h image.h matrix.h timer.h triangle.h)
 
 add_library(elas ${ELAS_SOURCES})
+target_link_libraries(elas gomp)
 
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     add_executable(main main.cpp)

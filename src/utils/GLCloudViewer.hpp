@@ -35,7 +35,7 @@ class GLCloudViewer {
 
   void ProcessEvents();
 
-  void ShowCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, int color = 0);
+  void ShowCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, unsigned char* color);
 
   void ShowCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, int color = 0);
 

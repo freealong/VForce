@@ -6,6 +6,7 @@
 #define VFORCE_DETECTOR_HPP
 
 #include <opencv2/opencv.hpp>
+#include <Eigen/Eigen>
 
 namespace VForce {
 
@@ -14,6 +15,8 @@ struct ObjectInfo {
   cv::Mat mask_;
   int id_;
   bool valid_mask_;
+  Eigen::Matrix4f pose_;
+  bool valid_pose_;
 };
 
 typedef std::vector<ObjectInfo> DetectorResults;

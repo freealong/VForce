@@ -4,6 +4,8 @@
 
 #include "Matcher.hpp"
 #include <pcl/search/impl/kdtree.hpp>
+#include <pcl/io/pcd_io.h>
+#include <glog/logging.h>
 
 using namespace std;
 

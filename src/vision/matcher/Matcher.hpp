@@ -17,7 +17,7 @@ class Matcher {
   typedef typename boost::shared_ptr<PointTCloud> PointTCloudPtr;
 
   Matcher(const std::string &cfg_root = ".", const std::string &cfg_file = "Matcher") :
-      cfg_root_(cfg_root), cfg_file_(cfg_file), init_(false), model_(new PointTCloud) {
+      cfg_root_(cfg_root), cfg_file_(cfg_file), init_(false) {
   }
 
   /**
@@ -29,12 +29,17 @@ class Matcher {
 
   /**
    * Estimate transformation from model to target
+   * @param model model pointcloud
+   * @param model_size model size
    * @param target target pointcloud
+   * @param id target pointcloud's class id
    * @param tf estimated transformation
    * @param final the transformed model(aligned to target)
    * @return match error
    */
-  virtual double EstimatePose(const PointTCloudPtr &target, Eigen::Matrix4f &tf, PointTCloudPtr &final) = 0;
+  virtual double EstimatePose(const PointTCloudPtr &model, const float* model_size,
+                              const PointTCloudPtr &target,
+                              Eigen::Matrix4f &tf, PointTCloudPtr &final) = 0;
 
   // @TODO: filter some target based on target size
 
@@ -49,7 +54,6 @@ class Matcher {
 
  protected:
 
-  PointTCloudPtr model_;
   bool init_;
   std::string cfg_root_, cfg_file_;
 };

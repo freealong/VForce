@@ -99,20 +99,21 @@ void TCPThread(string address, int port, RequestType &request, int &flag, Pose &
  * @param height window height
  * @param name window name
  * @param cloud raw cloud from the camera
- * @param target target cloud
- * @param cMo transformation from camera to target
+ * @param transformed_models a map store transformed models
+ * @param results vision results
  */
 void GUIThread(int width, int height, string name, RequestType &request,
                PointCloud<PointType>::Ptr &cloud,
-               PointCloud<PointXYZ>::Ptr &target_cloud,
-               Eigen::Matrix4f &cMo) {
+               std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &transformed_models,
+               std::vector<ObjectInfo> &results) {
   LOG(INFO) << "Initializing GUI thread...";
   Utils::GLCloudViewer viewer(width, height, name);
   viewer.InitWindow();
 //  vector<PointXYZ> origin_box = ();
 //  vector<PointXYZ> target_box(origin_box);
-  vector<PointXYZ> origin_axis{{0, 0, 0}, {0.1, 0, 0}, {0, 0.1, 0}, {0, 0, 0.1}};
-  vector<PointXYZ> target_axis(origin_axis);
+  vector<PointXYZ> origin_axis{{0, 0, 0}, {0.06, 0, 0}, {0, 0.06, 0}, {0, 0, 0.06}};
+  vector<vector<PointXYZ>> target_axis_buffer;
+  vector<vector<unsigned char>> target_color_buffer;
 
   LOG(INFO) << "Initialized GUI thread successfully";
   while (viewer.NotStop()) {
@@ -126,16 +127,27 @@ void GUIThread(int width, int height, string name, RequestType &request,
         request = RequestType::IN1;
         gui_cv.wait(lk, [&]{return request == RequestType::OUT1 || request == RequestType::VIP;});
       }
-      Utils::transform_points(origin_axis, target_axis, cMo);
+      target_axis_buffer.clear();
+      target_color_buffer.clear();
+      for (auto &res : results) {
+        vector<PointXYZ> target_axis(origin_axis);
+        Utils::transform_points(origin_axis, target_axis, res.pose_);
+        target_axis_buffer.emplace_back(target_axis);
+//        vector<unsigned char> target_color{rand()%256, rand()%256, rand()%256};
+        vector<unsigned char> target_color{255, 0, 0};
+        target_color_buffer.emplace_back(target_color);
+      }
 //      target_box = TransformPoints(cMo, origin_box);
       if (request == RequestType::VIP)
         request = RequestType::NONE;
     }
     viewer.DrawAxis(origin_axis); // camera origin
-    viewer.DrawAxis(target_axis);
     viewer.ShowCloud(cloud);
+    for (auto &target_axis : target_axis_buffer)
+      viewer.DrawAxis(target_axis);
+    for (int i = 0; i < target_axis_buffer.size(); ++i)
+      viewer.ShowCloud(transformed_models[i], target_color_buffer[i].data());
 //      viewer.Draw3DBox(target_box);
-    viewer.ShowCloud(target_cloud, 1);
     viewer.SwapBuffer();
   }
   viewer.DestoryWindow();
@@ -152,14 +164,14 @@ void GUIThread(int width, int height, string name, RequestType &request,
  * @param target_pose target pose in robot coordinate
  * @param gui_request gui request signal
  * @param cloud raw point cloud from camera
- * @param target_cloud target point cloud
- * @param cMo transfomation from camera coordinate to target
+ * @param transformed_models a map store transformed models
+ * @param results vision results
  */
 void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
                   RequestType &tcp_request, int &flag, Pose &target_pose,
                   RequestType &gui_request, PointCloud<PointType>::Ptr &cloud,
-                  PointCloud<PointXYZ>::Ptr &target_cloud,
-                  Eigen::Matrix4f &cMo) {
+                  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &transformed_models,
+                  std::vector<ObjectInfo> &results) {
   LOG(INFO) << "Initializing vision thread...";
   shared_ptr<Camera> camera;
   if (FLAGS_virtual_camera)
@@ -174,12 +186,17 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
     }
     else {
       LOG(ERROR) << "Unrecognized Camera name(should be Realsense or StereoRealsense): " << camera_name;
+      return;
     }
   }
   camera->Start();
   cv::Mat color, depth;
 
   Vision vision(FLAGS_config_root, vision_cfg);
+  if (!vision.Init()) {
+    LOG(ERROR) << "Vision init failed";
+    return;
+  }
   Robot robot(FLAGS_config_root, robot_cfg);
 
   LOG(INFO) << "Vision thread initialized successfully";
@@ -198,9 +215,10 @@ void VisionThread(string camera_name, string vision_cfg, string robot_cfg,
         continue;
       }
       if (vision.Process(color, depth, cloud)) {
-        cMo = vision.GetObjectTransfomation();
+        results = vision.GetVisionResults();
+        auto cMo = results[0].pose_;
         LOG(INFO) << "cMo:\n" << cMo.format(Utils::IOF);
-        target_cloud = vision.GetTransformedModel();
+        transformed_models = vision.GetTransformedModels();
         robot.CalculatePose(cMo, target_pose, flag);
         if (tcp_request == RequestType::IN1) {
           tcp_request = RequestType::OUT1;
@@ -251,17 +269,17 @@ int main(int argc, char **argv) {
   // share variable between GUIThread and VisionThread
   RequestType gui_request = RequestType::NONE;
   PointCloud<PointType>::Ptr cloud(new PointCloud<PointType>);
-  PointCloud<PointXYZ>::Ptr target_cloud;
-  Eigen::Matrix4f cMo;
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> transformed_models;
+  std::vector<ObjectInfo> results;
 
   shared_ptr<thread> vision_thread(new thread(VisionThread, camera_name, vision_cfg, robot_cfg,
                                               std::ref(tcp_request), std::ref(flag), std::ref(target_pose),
-                                              std::ref(gui_request), std::ref(cloud), std::ref(target_cloud),
-                                              std::ref(cMo)));
+                                              std::ref(gui_request), std::ref(cloud), std::ref(transformed_models),
+                                              std::ref(results)));
   shared_ptr<thread> gui_thread, tcp_thread;
   if (FLAGS_gui) {
     gui_thread = shared_ptr<thread>(new thread(GUIThread, width, height, argv[0], std::ref(gui_request),
-                                               std::ref(cloud), std::ref(target_cloud), std::ref(cMo)));
+                                               std::ref(cloud), std::ref(transformed_models), std::ref(results)));
   }
 
   if (FLAGS_tcp) {

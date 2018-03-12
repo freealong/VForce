@@ -15,14 +15,14 @@ class RandomICPMatcher : public Matcher {
 
   virtual bool LoadConfig(const std::string &cfg_file);
 
-  virtual double EstimatePose(const PointTCloudPtr &target, Eigen::Matrix4f &tf, PointTCloudPtr &final);
+  virtual double EstimatePose(const PointTCloudPtr &model, const float* model_size,
+                              const PointTCloudPtr &target,
+                              Eigen::Matrix4f &tf, PointTCloudPtr &final);
 
  private:
-  float model_size_[3];
   float uniform_radius_;
   int divide_num_;
   int iter_num_;
-  PointTCloudPtr sampled_model_;
 };
 
 }
