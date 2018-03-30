@@ -47,6 +47,9 @@ double RandomICPMatcher::EstimatePose(const PointTCloudPtr &model, const float* 
     LOG(ERROR) << "Matcher not initialized";
     return std::numeric_limits<double>::max();
   }
+  if (target->empty()) {
+    return 1;
+  }
   PointTCloudPtr sampled_target(new PointTCloud);
   Utils::sampling_cloud(target, sampled_target, uniform_radius_);
   final = PointTCloudPtr(new PointTCloud);

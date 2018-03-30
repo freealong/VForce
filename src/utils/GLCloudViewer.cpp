@@ -142,6 +142,7 @@ void GLCloudViewer::Draw3DBox(const std::vector<pcl::PointXYZ> &box, int color) 
 void GLCloudViewer::DrawAxis(const std::vector<pcl::PointXYZ> &points) {
   assert(points.size() == 4);
   auto &origin = points[0], &x_axis = points[1], &y_axis = points[2], &z_axis = points[3];
+  glLineWidth(5);
   glBegin(GL_LINES);
   glColor3ub(255, 0, 0);
   glVertex3f(origin.x, origin.y, origin.z);
