@@ -6,6 +6,7 @@ option(ENABLE_TESTS "Enable build tests" TRUE)
 option(ENABLE_APPS "Enable build apps" TRUE)
 option(ENABLE_TOOLS "Enable build tools" TRUE)
 option(ENABLE_TIMING "Enable computation time recording" TRUE)
+option(BUILD_DOC "Create and install the HTML based API documentation (requires Doxygen)" TRUE)
 
 # Variables configuration
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -70,9 +71,8 @@ if (ENABLE_TOOLS)
 endif ()
 
 # doc
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
-    # @TODO: build doc
+if (BUILD_DOC)
+    add_subdirectory(doc)
 endif()
 
 # Installation
