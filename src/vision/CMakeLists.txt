@@ -1,12 +1,15 @@
 project(VForce-Vision)
 
-set(vision_ROOT "${SRC_DIR}/vision")
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+find_package(NumPy REQUIRED)
+include_directories(${PYTHON_NUMPY_INCLUDE_DIR})
 
-add_subdirectory(${vision_ROOT}/detector)
-add_subdirectory(${vision_ROOT}/matcher)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/detector)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/matcher)
 
-file(GLOB vision_HEADERS ${vision_ROOT}/*.hpp ${vision_ROOT}/*.h)
-file(GLOB vision_SOURCES ${vision_ROOT}/*.cpp)
+file(GLOB vision_HEADERS ${CMAKE_CURRENT_LIST_DIR}/*.hpp ${CMAKE_CURRENT_LIST_DIR}/*.h)
+file(GLOB vision_SOURCES ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
 
 add_library(vforce_vision ${vision_SOURCES} ${vision_HEADERS})
 target_link_libraries(vforce_vision vforce_detector vforce_matcher)

@@ -3,6 +3,7 @@
 //
 
 #include <glog/logging.h>
+#include "NDArrayConverter.hpp"
 #include "FRCNNDetector.hpp"
 
 namespace VForce {

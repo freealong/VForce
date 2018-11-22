@@ -6,7 +6,7 @@
 #define VFORCE_MRCNNDETECTOR_HPP
 
 #include "Detector.hpp"
-#include "NDArrayConverter.hpp"
+#include "Python.h"
 
 namespace VForce {
 

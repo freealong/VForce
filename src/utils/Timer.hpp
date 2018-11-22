@@ -36,6 +36,19 @@ class Timer {
   clock::time_point beg_;
 };
 
+#if ENABLE_TIMING
+#define TIMING_INIT   static auto start_timing = std::chrono::high_resolution_clock::now();\
+    std::chrono::duration<double> elapsed_timing(0)
+
+#define START_TIMING  start_timing = std::chrono::high_resolution_clock::now()
+#define END_TIMING(text_timing)   elapsed_timing = std::chrono::high_resolution_clock::now() - start_timing;\
+    text_timing << " used: " << elapsed_timing.count()*1000.0 << " ms\n"
+#else
+#define TIMING_INIT
+#define START_TIMING
+#define END_TIMING(text_timing)
+#endif
+
 }
 }
 #endif //VFORCE_TIMER_HPP

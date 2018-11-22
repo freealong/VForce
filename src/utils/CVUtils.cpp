@@ -27,6 +27,17 @@ void apply_mask(cv::Mat &img, const cv::Mat &mask, const cv::Scalar &color) {
     }
 }
 
+void put_label(cv::Mat &img, const std::string &label, const cv::Point &p, const cv::Scalar &color) {
+  int fontface = cv::FONT_HERSHEY_SIMPLEX;
+  double scale = 0.4;
+  int thickness = 1;
+  int baseline = 0;
+
+  cv::Size text = cv::getTextSize(label, fontface, scale, thickness, &baseline);
+  cv::rectangle(img, p + cv::Point(0, baseline), p + cv::Point(text.width, -text.height), CV_RGB(0,0,0), CV_FILLED);
+  cv::putText(img, label, p, fontface, scale, color, thickness, 8);
+}
+
 void write_depth(const std::string &depth_file, const cv::Mat &depth_meter) {
   cv::Mat depth_mat(depth_meter.size(), CV_16UC1);
   for (int y = 0; y < depth_mat.rows; y++)

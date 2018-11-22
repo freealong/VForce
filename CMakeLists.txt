@@ -29,6 +29,7 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
    Allowed values are Debug, Release")
 endif ()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Compiler configuration
 include(cmake/ConfigureCompiler.cmake)
 
