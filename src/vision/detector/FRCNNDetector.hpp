@@ -6,8 +6,8 @@
 #define VFORCE_FRCNNDETECTOR_HPP
 
 #include "Detector.hpp"
-#include "NDArrayConverter.hpp"
 #include "LineSegment.hpp"
+#include "Python.h"
 
 namespace VForce {
 

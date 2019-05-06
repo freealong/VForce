@@ -26,6 +26,11 @@ cv::Scalar random_color();
 void apply_mask(cv::Mat &img, const cv::Mat &mask, const cv::Scalar &color);
 
 /**
+ * draw a label on image
+ */
+void put_label(cv::Mat &img, const std::string &label, const cv::Point &p, const cv::Scalar &color);
+
+/**
  * Eigen Matrix cout format;
  * [ 1,  2,  3,  4,
  *   5,  6,  7,  8,
@@ -51,6 +56,14 @@ static inline void operator>>(const cv::FileNode &node, Eigen::Matrix<T, Row, Co
     for (auto y = 0; y < Row; ++y)
       for (auto x = 0; x < Col; ++x)
         tf(y, x) = static_cast<T>(*it++);
+  }
+}
+
+template<typename T>
+static inline void operator>>(const cv::FileNode &node, std::vector<T> &vec) {
+  vec.clear();
+  for (auto it = node.begin(); it != node.end(); ++it) {
+    vec.emplace_back(static_cast<T>(*it));
   }
 }
 

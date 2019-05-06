@@ -5,7 +5,7 @@
 #ifndef VFORCE_PYTHONCONVERSION_HPP
 #define VFORCE_PYTHONCONVERSION_HPP
 
-#include <python3.5/Python.h>
+#include <Python.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <numpy/numpyconfig.h>
